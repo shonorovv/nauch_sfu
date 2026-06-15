@@ -13,14 +13,13 @@ foreach ($f in @("_install_cupy.py", "_run_install.bat", "_install_result.txt",
     }
 }
 
-# Удаляем незаконченный .git если он есть (без объектов/коммитов)
-# и создаём новый, чистый репозиторий
-if (Test-Path ".git") {
-    Remove-Item -Recurse -Force ".git"
-    Write-Host "Удалён старый .git" -ForegroundColor Yellow
+# Инициализируем репозиторий только если .git ещё нет
+if (-not (Test-Path ".git")) {
+    git init -b main
+    Write-Host "git init выполнен" -ForegroundColor Green
+} else {
+    Write-Host ".git уже существует, продолжаем" -ForegroundColor Gray
 }
-git init -b main
-Write-Host "git init выполнен" -ForegroundColor Green
 
 # Устанавливаем remote
 $existingRemotes = git remote 2>&1
@@ -43,7 +42,7 @@ git add -A
 git status --short
 
 # Коммит
-$msg = "diplom: Fokker-Planck GPU (CuPy 14.1), stride memory fix, backend.py"
+$msg = "docs: добавить README.md (быстрый старт, параметры, структура)"
 git commit -m $msg
 $commitCode = $LASTEXITCODE
 if ($commitCode -eq 0) {
