@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+
+# Выходные данные расчётов
+output*/
+output/
+figures*/
+figures/
+data_export*/
+data_export/
+results*/
+
+# Графики и данные
+*.png
+*.pdf
+*.csv
+*.json
+*.xlsx
+
+# Временные файлы
+_test_write.py
+test_write.py
+test_w.py
+*.log
