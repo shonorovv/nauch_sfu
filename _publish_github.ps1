@@ -42,7 +42,7 @@ git add -A
 git status --short
 
 # Коммит
-$msg = "docs: добавить README.md (быстрый старт, параметры, структура)"
+$msg = "docs: улучшить README - бейджи, описание, структура"
 git commit -m $msg
 $commitCode = $LASTEXITCODE
 if ($commitCode -eq 0) {
