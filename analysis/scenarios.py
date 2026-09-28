@@ -16,6 +16,7 @@ from utils.helpers import _sanitize_window, _append_radius_unique, _append_time_
 from analysis.inversion import (
     find_peak_inversion_time,
     find_profile_inversion_time,
+    find_mass_inversion_time,
     find_nonmonotonic_inversion_time,
 )
 from analysis.entropy import (
@@ -30,6 +31,7 @@ from analysis.information import (
     compute_rare_event_metrics,
     compute_region_event_metrics,
 )
+from analysis.excitotoxicity import compute_extrasynaptic_exposure
 
 
 # ---------------------------------------------------------------------------
@@ -37,13 +39,30 @@ from analysis.information import (
 # ---------------------------------------------------------------------------
 
 def build_omega_case_table(omega_cleft, omega_pm_baseline, include_comparison=True):
+    """
+    Строит таблицу сценариев Omega_pm.
+
+    include_comparison=False - только один сценарий с заданным omega_pm_baseline
+        (текущий рабочий режим, например Omega_pm = 3*Omega_cleft из config).
+    include_comparison=True  - дополнительно добавляется контрольный сценарий
+        без асимметрии дрейфа (omega_pm = omega_cleft), чтобы было с чем
+        сравнивать: без этого блоки сравнения сценариев в main.py всегда
+        получали один и тот же единственный случай.
+    """
     omega_cleft = float(omega_cleft)
-    return {
+    omega_pm_baseline = float(omega_pm_baseline)
+    table = {
         "q_3q_слева": {
             "label": "q = 3q слева",
-            "omega_pm": 3.0 * omega_cleft,
+            "omega_pm": omega_pm_baseline,
         }
     }
+    if include_comparison:
+        table["q_1q_слева"] = {
+            "label": "q = 1q слева (без асимметрии дрейфа)",
+            "omega_pm": omega_cleft,
+        }
+    return table
 
 
 def select_comparison_scenarios(scenarios, reference_name="базовый", candidate_name="утроенный"):
@@ -204,6 +223,11 @@ def run_theory_scan(
     Omega_transition_kind,
     Omega_transition_steepness,
     outer_boundary_mode,
+    k_cleft=0.0,
+    k_pm=0.0,
+    k_transition_kind=None,
+    k_transition_steepness=None,
+    normalization_mode="probability",
 ):
     from solver.fp_solver import solve_fp_equation
     results = []
@@ -218,6 +242,11 @@ def run_theory_scan(
                 D_transition_kind, D_transition_steepness,
                 Omega_transition_kind, Omega_transition_steepness,
                 outer_boundary_mode=outer_boundary_mode,
+                k_cleft=k_cleft,
+                k_pm=k_pm,
+                k_transition_kind=k_transition_kind,
+                k_transition_steepness=k_transition_steepness,
+                normalization_mode=normalization_mode,
             )
             nonmono = find_nonmonotonic_inversion_time(
                 r_case, t_case, p_history_case,
@@ -279,6 +308,15 @@ def run_scenario_analysis(case_name, case_label, omega_pm_value, sim_t_max):
         config.Omega_transition_kind,
         config.Omega_transition_steepness,
         outer_boundary_mode=config.outer_boundary_mode,
+        k_cleft=config.k_cleft,
+        k_pm=config.k_pm,
+        k_transition_kind=config.k_transition_kind,
+        k_transition_steepness=config.k_transition_steepness,
+        normalization_mode=config.normalization_mode,
+        uptake_kind=config.uptake_kind,
+        Vmax_cleft=config.Vmax_cleft,
+        Vmax_pm=config.Vmax_pm,
+        Km=config.Km,
     )
 
     entropy_bundle = compute_local_entropy_fields(p_history, r_values, config.dr)
@@ -334,6 +372,18 @@ def run_scenario_analysis(case_name, case_label, omega_pm_value, sim_t_max):
         r_values, t_values, p_history,
         config.inversion_reference_radius,
         boundary_guard_nm=config.inversion_boundary_guard_nm,
+    )
+    mass_inversion = find_mass_inversion_time(
+        r_values, t_values, entropy_bundle["shell_probabilities"],
+        inv_start, inv_end,
+        min_ratio=config.inversion_min_ratio,
+        pick="first",
+        boundary_guard_nm=config.inversion_boundary_guard_nm,
+    )
+    excitotoxic_exposure = compute_extrasynaptic_exposure(
+        r_values, t_values, entropy_bundle["shell_probabilities"],
+        config.excitotoxicity_extrasynaptic_radius,
+        concentration_threshold=config.excitotoxicity_concentration_threshold,
     )
 
     if config.auto_include_inversion_time and inv_profile is not None:
@@ -415,6 +465,8 @@ def run_scenario_analysis(case_name, case_label, omega_pm_value, sim_t_max):
         "inv_profile": inv_profile,
         "nonmonotonic": nonmonotonic,
         "peak_inversion": peak_inversion,
+        "mass_inversion": mass_inversion,
+        "excitotoxic_exposure": excitotoxic_exposure,
         "pulse_shape": pulse_increment_profile(
             r_values, config.pulse_r_window, config.pulse_amount, config.dr,
             pulse_info.get("geometry_mode")

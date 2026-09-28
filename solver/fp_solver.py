@@ -8,7 +8,7 @@ from solver.geometry import (
     radial_cell_measures,
     radial_face_measures,
 )
-from physics.transport import D_variable, Omega_variable
+from physics.transport import D_variable, Omega_variable, k_variable
 from physics.pulses import apply_pulse, compute_pulse_schedule
 
 
@@ -40,12 +40,58 @@ def solve_fp_equation(
     Omega_transition_kind,
     Omega_transition_steepness,
     outer_boundary_mode="dirichlet",
+    k_cleft=0.0,
+    k_pm=0.0,
+    k_transition_kind=None,
+    k_transition_steepness=None,
+    normalization_mode="probability",
+    uptake_kind="linear",
+    Vmax_cleft=0.0,
+    Vmax_pm=0.0,
+    Km=1.0,
 ):
+    """
+    normalization_mode:
+    - "probability"  - p(r,t) описывает вероятность найти одну частицу.
+      Полная масса принудительно нормируется к 1 на каждом шаге и при
+      каждом импульсе (исходное поведение модели).
+    - "concentration" - c(r,t) описывает концентрацию вещества. Масса не
+      ренормируется принудительно: она меняется только через поток на
+      границе (outer_boundary_mode), отбор k(r) и источник S (импульсы).
+      Смешивать два режима в одном расчёте нельзя (см. config.py).
+
+    uptake_kind:
+    - "linear" (по умолчанию) - сток -k(r)*c, входит в матрицу неявно
+      (как раньше, поведение не меняется).
+    - "saturable" - насыщаемый отбор Михаэлиса-Ментен -Vmax(r)*c/(Km+c):
+      физически ближе к "перегрузке транспортёров" (при c>>Km скорость
+      отбора выходит на плато Vmax(r) и дальше расти не может), но делает
+      сток нелинейным по неизвестной c. Матрица неявного оператора
+      диффузии/дрейфа при этом не меняется (не пересобирается и не
+      перефакторизуется каждый шаг - иначе была бы дополнительная просадка
+      по скорости поверх текущей); сама реакция берётся по значению c с
+      предыдущего шага и добавляется явно в правую часть (IMEX-схема,
+      стандартный приём для стока с насыщением). Условие устойчивости
+      явной части: dt должен быть заметно меньше Km/Vmax(r) - если это не
+      так, ниже выводится предупреждение.
+    - "none" - без отбора (k и Vmax игнорируются).
+    """
     if dt <= 0.0 or dr <= 0.0:
         raise ValueError("dt и dr должны быть положительными.")
     boundary_mode = str(outer_boundary_mode).lower()
     if boundary_mode not in ("dirichlet", "no_flux"):
         raise ValueError(f"Неизвестное условие на внешней границе: {outer_boundary_mode}")
+    normalization_mode = str(normalization_mode).lower()
+    if normalization_mode not in ("probability", "concentration"):
+        raise ValueError(f"Неизвестный режим нормировки: {normalization_mode}")
+    renormalize = normalization_mode == "probability"
+    k_transition_kind = D_transition_kind if k_transition_kind is None else k_transition_kind
+    k_transition_steepness = (
+        D_transition_steepness if k_transition_steepness is None else k_transition_steepness
+    )
+    uptake_kind = str(uptake_kind).lower()
+    if uptake_kind not in ("linear", "saturable", "none"):
+        raise ValueError(f"Неизвестный вид отбора: {uptake_kind}")
 
     n_r = max(int(np.round(max_r / dr)), 1)
     r_values = (np.arange(n_r) + 0.5) * dr
@@ -62,6 +108,23 @@ def solve_fp_equation(
     Omega_faces[0] = 0.0
     if boundary_mode == "no_flux":
         Omega_faces[-1] = 0.0
+    if uptake_kind == "linear":
+        K_values = k_variable(r_values, k_cleft, k_pm, xi_s, a, b, k_transition_kind, k_transition_steepness)
+    else:
+        K_values = np.zeros_like(r_values)
+
+    Vmax_values = None
+    Km_value = None
+    if uptake_kind == "saturable":
+        Vmax_values = k_variable(r_values, Vmax_cleft, Vmax_pm, xi_s, a, b, k_transition_kind, k_transition_steepness)
+        Km_value = max(float(Km), config.EPS)
+        vmax_peak = float(np.max(Vmax_values)) if Vmax_values.size else 0.0
+        if vmax_peak > 0.0 and dt > 2.0 * Km_value / vmax_peak:
+            print(
+                f"ПРЕДУПРЕЖДЕНИЕ: явная часть насыщаемого отбора может быть неустойчива "
+                f"(dt={dt:g} > 2*Km/Vmax={2.0 * Km_value / vmax_peak:g}) - уменьшите dt "
+                f"или Vmax, либо увеличьте Km."
+            )
 
     face_measures = radial_face_measures(r_faces, geometry_kind)
     diff_faces = face_measures * D_faces / dr
@@ -81,6 +144,7 @@ def solve_fp_equation(
         diff_bc = 2.0 * face_measures[-1] * D_faces[-1] / dr
         adv_bc = max(float(face_measures[-1] * Omega_faces[-1]), 0.0)
         main_diag[-1] += diff_bc + adv_bc
+    main_diag += K_values * dV  # отбор (uptake): -k(r)*c, неявная по времени добавка на диагональ
 
     matrix = backend.diags(
         [backend.to_gpu(lower_diag), backend.to_gpu(main_diag), backend.to_gpu(upper_diag)],
@@ -150,7 +214,8 @@ def solve_fp_equation(
     p_previous = np.zeros_like(r_values)
     if pulse_mask[0]:
         p_previous = apply_pulse(
-            p_previous, r_values, pulse_r_window, pulse_amount, dr, geometry_kind
+            p_previous, r_values, pulse_r_window, pulse_amount, dr, geometry_kind,
+            renormalize=renormalize,
         )
         pulse_indices_used.append(0)
         if adaptive_on_decay:
@@ -182,12 +247,24 @@ def solve_fp_equation(
     inv_dt_dev = backend.to_gpu(inv_dt)
     p_previous_dev = backend.to_gpu(p_previous)
     rhs_dev = backend.xp.empty(n_r)
+    Vmax_dev = backend.to_gpu(Vmax_values) if uptake_kind == "saturable" else None
 
     if adaptive_on_decay and adaptive_probe_idx is not None:
         adaptive_probe_prev = float(p_previous_dev[adaptive_probe_idx])
         adaptive_probe_curr = adaptive_probe_prev
 
+    # Проверка невязки решения (residual_dev = matrix @ p - rhs) требует
+    # нескольких синхронизаций GPU<->CPU за шаг (float(), bool()). При
+    # мелком dt и большом t_max (реалистичный биологический масштаб,
+    # десятки-сотни тысяч шагов) это на порядок замедляет расчёт, хотя
+    # неявная схема безусловно устойчива и невязка почти никогда не
+    # превышает допуск. Поэтому по умолчанию проверяем не каждый шаг, а
+    # раз в solver_residual_check_stride шагов (config.py), плюс всегда
+    # последний шаг. stride=1 воспроизводит прежнее поведение (нужно для
+    # тестов валидации).
     solver_total_steps = max(n_t - 1, 0)
+    solver_residual_check_stride = max(int(getattr(config, "solver_residual_check_stride", 1)), 1)
+    solver_checked_steps = 0
     solver_converged_steps = 0
     solver_failed_times = []
 
@@ -210,7 +287,10 @@ def solve_fp_equation(
 
         if pulse_mask[t_idx]:
             p_cpu = backend.to_cpu(p_previous_dev)
-            p_cpu = apply_pulse(p_cpu, r_values, pulse_r_window, pulse_amount, dr, geometry_kind)
+            p_cpu = apply_pulse(
+                p_cpu, r_values, pulse_r_window, pulse_amount, dr, geometry_kind,
+                renormalize=renormalize,
+            )
             p_previous_dev = backend.to_gpu(p_cpu)
             pulse_indices_used.append(t_idx)
             if adaptive_on_decay:
@@ -221,23 +301,32 @@ def solve_fp_equation(
                 adaptive_probe_curr = adaptive_probe_prev
 
         backend.xp.multiply(inv_dt_dev, p_previous_dev, out=rhs_dev)
+        if uptake_kind == "saturable":
+            # Явная (лаговая) добавка насыщаемого стока -Vmax(r)*c/(Km+c),
+            # оцененная по c с предыдущего шага (см. docstring выше) -
+            # матрица оператора диффузии/дрейфа при этом не меняется.
+            reaction_dev = Vmax_dev * p_previous_dev / (Km_value + p_previous_dev)
+            rhs_dev -= reaction_dev * dV_dev
         p_current_dev = solver_fn(rhs_dev)
 
-        residual_ok = False
-        if bool(backend.xp.all(backend.xp.isfinite(p_current_dev))):
-            residual_dev = matrix.dot(p_current_dev) - rhs_dev
-            denom = max(float(backend.xp.linalg.norm(rhs_dev)), 1e-30)
-            residual_rel = float(backend.xp.linalg.norm(residual_dev) / denom)
-            residual_ok = residual_rel <= float(config.SOLVER_RESIDUAL_TOL)
-        if residual_ok:
-            solver_converged_steps += 1
-        else:
-            solver_failed_times.append(float(t_values[t_idx]))
+        if t_idx % solver_residual_check_stride == 0 or t_idx == n_t - 1:
+            solver_checked_steps += 1
+            residual_ok = False
+            if bool(backend.xp.all(backend.xp.isfinite(p_current_dev))):
+                residual_dev = matrix.dot(p_current_dev) - rhs_dev
+                denom = max(float(backend.xp.linalg.norm(rhs_dev)), 1e-30)
+                residual_rel = float(backend.xp.linalg.norm(residual_dev) / denom)
+                residual_ok = residual_rel <= float(config.SOLVER_RESIDUAL_TOL)
+            if residual_ok:
+                solver_converged_steps += 1
+            else:
+                solver_failed_times.append(float(t_values[t_idx]))
 
         backend.xp.maximum(p_current_dev, 0.0, out=p_current_dev)
-        total = float(backend.xp.dot(p_current_dev, dV_dev))
-        if total > 0.0:
-            p_current_dev /= total
+        if renormalize:
+            total = float(backend.xp.dot(p_current_dev, dV_dev))
+            if total > 0.0:
+                p_current_dev /= total
 
         if t_idx % save_stride == 0 or t_idx == n_t - 1:
             if save_count < n_alloc:
@@ -351,10 +440,20 @@ def solve_fp_equation(
         "trigger_require_rise": bool(adaptive_require_rise),
         "outer_boundary_mode": boundary_mode,
         "geometry_mode": geometry_kind,
+        "normalization_mode": normalization_mode,
+        "uptake_kind": uptake_kind,
+        "k_cleft": float(k_cleft),
+        "k_pm": float(k_pm),
+        "k_values": K_values,
+        "Vmax_cleft": float(Vmax_cleft) if uptake_kind == "saturable" else None,
+        "Vmax_pm": float(Vmax_pm) if uptake_kind == "saturable" else None,
+        "Km": float(Km_value) if Km_value is not None else None,
         "solver_convergence": {
             "total_steps": int(solver_total_steps),
+            "check_stride": int(solver_residual_check_stride),
+            "checked_steps": int(solver_checked_steps),
             "converged_steps": int(solver_converged_steps),
-            "failed_steps": int(solver_total_steps - solver_converged_steps),
+            "failed_steps": int(solver_checked_steps - solver_converged_steps),
             "failed_times": np.asarray(solver_failed_times, dtype=float),
             "residual_tol": float(config.SOLVER_RESIDUAL_TOL),
         },

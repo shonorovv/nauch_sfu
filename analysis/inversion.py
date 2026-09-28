@@ -90,6 +90,65 @@ def find_profile_inversion_time(
     )
 
 
+def find_mass_inversion_time(
+    r_values,
+    t_values,
+    shell_probabilities,
+    synapse_radius,
+    transition_radius,
+    min_ratio=1.0,
+    pick="max",
+    boundary_guard_nm=0.0,
+):
+    """
+    То же самое сравнение "переходная зона против синапса", что и
+    find_profile_inversion_time, но по массе (интегральной вероятности
+    найти частицу в области), а не по максимуму плотности p.
+
+    В радиальной геометрии dV ~ r^(d-1) dr растёт с r, поэтому максимум
+    плотности p и максимум вероятности оболочки q=p*dV - разные величины:
+    p может быть меньше внутри синапса, а вероятность найти частицу там -
+    больше (или наоборот). Для физической интерпретации "куда ушло
+    вещество" сравнивать нужно именно массы areas, что и делает эта функция.
+
+    Возвращает (time_us, ratio, mass_tr, mass_syn), где ratio =
+    mass_tr / mass_syn - отношение массы в переходной зоне к массе внутри
+    синапса.
+    """
+    shell_probabilities = np.asarray(shell_probabilities, dtype=float)
+    if shell_probabilities.size == 0:
+        return None
+    r_values = np.asarray(r_values, dtype=float)
+    syn_mask = r_values <= float(synapse_radius)
+    upper_bound = float(r_values[-1]) - max(float(boundary_guard_nm), 0.0)
+    tr_mask = (
+        (r_values >= float(synapse_radius))
+        & (r_values <= float(transition_radius))
+        & (r_values <= upper_bound + config.TIME_TOL)
+    )
+    if not np.any(syn_mask) or not np.any(tr_mask):
+        return None
+    mass_syn = np.sum(shell_probabilities[syn_mask, :], axis=0)
+    mass_tr = np.sum(shell_probabilities[tr_mask, :], axis=0)
+    ratio = mass_tr / np.maximum(mass_syn, config.EPS)
+    pick = str(pick).lower()
+    if pick == "first":
+        idx_list = np.where(ratio >= float(min_ratio))[0]
+        if idx_list.size == 0:
+            return None
+        idx = int(idx_list[0])
+    else:
+        idx = int(np.argmax(ratio))
+        if ratio[idx] < float(min_ratio):
+            return None
+    return (
+        float(t_values[idx]),
+        float(ratio[idx]),
+        float(mass_tr[idx]),
+        float(mass_syn[idx]),
+    )
+
+
 def find_nonmonotonic_inversion_time(
     r_values,
     t_values,

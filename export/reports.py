@@ -101,15 +101,24 @@ def report_solver_convergence_summary(pulse_info):
     """Выводит сводку по сходимости решателя."""
     solver_info = pulse_info.get("solver_convergence", {})
     total_steps = int(solver_info.get("total_steps", 0))
+    check_stride = int(solver_info.get("check_stride", 1))
+    checked_steps = int(solver_info.get("checked_steps", total_steps))
     converged_steps = int(solver_info.get("converged_steps", 0))
     failed_steps = int(solver_info.get("failed_steps", 0))
     failed_times = np.asarray(solver_info.get("failed_times", []), dtype=float)
     residual_tol = float(solver_info.get("residual_tol", config.SOLVER_RESIDUAL_TOL))
     print("Сходимость решателя:")
-    print(
-        f"  шагов: {total_steps}, сошлось: {converged_steps}, "
-        f"не сошлось: {failed_steps}, допуск={residual_tol:.1e}"
-    )
+    if check_stride > 1:
+        print(
+            f"  шагов всего: {total_steps} (невязка проверялась раз в {check_stride} "
+            f"шагов -> {checked_steps} проверок), сошлось: {converged_steps}, "
+            f"не сошлось: {failed_steps}, допуск={residual_tol:.1e}"
+        )
+    else:
+        print(
+            f"  шагов: {total_steps}, сошлось: {converged_steps}, "
+            f"не сошлось: {failed_steps}, допуск={residual_tol:.1e}"
+        )
     if failed_steps > 0 and failed_times.size:
         preview = ", ".join(f"{val:.2f}" for val in failed_times[:5])
         print(f"  первые t (мкс), где не сошлось: {preview}")
@@ -130,6 +139,11 @@ def report_parameter_summary():
         f"экспорт={'вкл' if config.export_figures else 'выкл'}"
     )
     print(f"  геометрия: {geometry_report_label()}")
+    print(
+        "  интерпретация: "
+        f"normalization_mode={config.normalization_mode} "
+        f"(k_cleft={config.k_cleft:.3g}, k_pm={config.k_pm:.3g} 1/мкс)"
+    )
 
 
 def report_entropy_point_comparison(scenario, max_times=3):
@@ -264,11 +278,35 @@ def write_meeting_summary(
     for scenario_name, scenario in scenarios.items():
         nonmono = scenario["nonmonotonic"]
         if nonmono is None:
-            lines.append(f"- {scenario_name}: немонотонная инверсия не обнаружена")
+            lines.append(f"- {scenario_name}: немонотонная инверсия (по максимуму p) не обнаружена")
         else:
             lines.append(
-                f"- {scenario_name}: немонотонная инверсия при t={nonmono['time']:.2f} мкс, "
+                f"- {scenario_name}: немонотонная инверсия (по максимуму p) при t={nonmono['time']:.2f} мкс, "
                 f"пики r={', '.join(f'{val:.1f}' for val in nonmono['peak_radii'][:3])} нм"
+            )
+        mass_inv = scenario.get("mass_inversion")
+        if mass_inv is None:
+            lines.append(f"- {scenario_name}: инверсия по массе области (переходная зона/синапс) не обнаружена")
+        else:
+            mass_time, mass_ratio, mass_tr, mass_syn = mass_inv
+            lines.append(
+                f"- {scenario_name}: инверсия по массе области при t={mass_time:.2f} мкс, "
+                f"отношение масс={mass_ratio:.3f} (масса перех. зоны={mass_tr:.3e}, масса синапса={mass_syn:.3e})"
+            )
+        exposure = scenario.get("excitotoxic_exposure")
+        if exposure is None:
+            lines.append(f"- {scenario_name}: внесинаптическая экспозиция не рассчитана (зона за радиусом пуста)")
+        else:
+            threshold_text = ""
+            if "time_above_threshold" in exposure:
+                threshold_text = (
+                    f", время выше порога {exposure['concentration_threshold']:.3e} = "
+                    f"{exposure['time_above_threshold']:.2f} мкс"
+                )
+            lines.append(
+                f"- {scenario_name}: экспозиция за r={exposure['extrasynaptic_radius']:.1f} нм "
+                f"(край синапса) - пик массы {exposure['peak_mass_extra']:.3e} при t={exposure['peak_time']:.2f} мкс, "
+                f"накопленная доза x время за весь расчёт = {exposure['exposure_total']:.3e}{threshold_text}"
             )
 
     lines.append("")
