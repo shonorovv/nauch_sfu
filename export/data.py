@@ -23,18 +23,20 @@ def export_scenario_data(scenario, scenario_dir):
     scenario_dir.mkdir(parents=True, exist_ok=True)
 
     if config.export_data:
-        np.savez_compressed(
-            scenario_dir / "массивы.npz",
-            **{
-                "радиусы_нм": scenario["r_values"],
-                "время_мкс": scenario["t_values"],
-                "история_p": scenario["p_history"],
-                "локальная_энтропия_плотности": scenario["local_entropy_density"],
-                "локальная_энтропия_оболочек": scenario["local_shell_entropy"],
-                "история_сигма": scenario["sigma_history"],
-                "вероятности_оболочек": scenario["shell_probabilities"],
-            },
-        )
+        arrays_to_save = {
+            "радиусы_нм": scenario["r_values"],
+            "время_мкс": scenario["t_values"],
+            "история_p": scenario["p_history"],
+            "локальная_энтропия_плотности": scenario["local_entropy_density"],
+            "локальная_энтропия_оболочек": scenario["local_shell_entropy"],
+            "история_сигма": scenario["sigma_history"],
+            "вероятности_оболочек": scenario["shell_probabilities"],
+        }
+        excitotoxic_exposure = scenario.get("excitotoxic_exposure")
+        if excitotoxic_exposure is not None:
+            arrays_to_save["внесинаптическая_масса"] = excitotoxic_exposure["mass_extra"]
+            arrays_to_save["внесинаптическая_экспозиция_накопленная"] = excitotoxic_exposure["exposure_cumulative"]
+        np.savez_compressed(scenario_dir / "массивы.npz", **arrays_to_save)
 
     summary = {
         "имя_сценария": scenario["case_name"],
@@ -45,6 +47,12 @@ def export_scenario_data(scenario, scenario_dir):
         "инверсия_профиля": _translate_saved_value(scenario["inv_profile"]),
         "немонотонность": _translate_saved_value(scenario["nonmonotonic"]),
         "инверсия_пика": _translate_saved_value(scenario["peak_inversion"]),
+        "инверсия_по_массе": _translate_saved_value(scenario.get("mass_inversion")),
+        "эксайтотоксическая_экспозиция": _translate_saved_value({
+            key: value
+            for key, value in (scenario.get("excitotoxic_exposure") or {}).items()
+            if not isinstance(value, np.ndarray)
+        } or None),
         "диагностика_границы": _translate_saved_value(scenario.get("boundary_diagnostics", {})),
         "проверки_энтропии": _translate_saved_value(scenario["entropy_checks"]),
         "сравнение_энтропии_в_точках": _translate_saved_value(scenario["entropy_point_comparison"]),

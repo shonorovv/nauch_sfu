@@ -32,16 +32,25 @@ def pulse_increment_profile(r_values, pulse_r_window, pulse_amount, dr, mode=Non
     return added
 
 
-def apply_pulse(p_values, r_values, pulse_r_window, pulse_amount, dr, mode=None):
+def apply_pulse(p_values, r_values, pulse_r_window, pulse_amount, dr, mode=None, renormalize=True):
     """
-    Применяет импульс к распределению p(r) и ренормирует.
+    Применяет импульс к распределению p(r).
+
+    renormalize=True  - интерпретация "вероятность одной частицы": после
+        добавления импульса полная масса принудительно возвращается к 1
+        (импульс переформирует распределение, а не добавляет вещество).
+    renormalize=False - интерпретация "концентрация вещества": импульс
+        реально добавляет массу pulse_amount, дальнейшая эволюция массы
+        определяется только границей и отбором k(r), без принудительной
+        нормировки. См. config.normalization_mode.
     """
     added = pulse_increment_profile(r_values, pulse_r_window, pulse_amount, dr, mode)
-    p_values += added
-    cell_measures = radial_cell_measures(r_values, dr, mode)
-    total = np.sum(p_values * cell_measures)
-    if total > 0.0:
-        p_values /= total
+    p_values = p_values + added
+    if renormalize:
+        cell_measures = radial_cell_measures(r_values, dr, mode)
+        total = np.sum(p_values * cell_measures)
+        if total > 0.0:
+            p_values /= total
     return p_values
 
 

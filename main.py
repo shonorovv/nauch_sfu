@@ -16,6 +16,7 @@ from visualization.plots import (
     _sigma_label,
     _sigma_title,
     check_normalization,
+    compute_probability_sums,
     plot_pr_snapshots,
     plot_sigma_lines,
 )
@@ -74,12 +75,22 @@ def main():
         print(f"=== Сценарий: {case_name} ({scenario['case_label']}) ===")
         report_pulse_summary(scenario["pulse_info"])
 
-        norm_ok, norm_min, norm_max, norm_dev = check_normalization(
-            scenario["p_history"],
-            scenario["r_values"],
-            config.dr,
-        )
-        report_normalization_summary(norm_ok, norm_min, norm_max, norm_dev)
+        if config.normalization_mode == "probability":
+            norm_ok, norm_min, norm_max, norm_dev = check_normalization(
+                scenario["p_history"],
+                scenario["r_values"],
+                config.dr,
+            )
+            report_normalization_summary(norm_ok, norm_min, norm_max, norm_dev)
+        else:
+            mass_series = compute_probability_sums(
+                scenario["p_history"], scenario["r_values"], config.dr
+            )
+            print("Масса (режим concentration, ренормировка отключена):")
+            print(
+                f"  масса по всем t: {float(mass_series.min()):.6f}..{float(mass_series.max()):.6f} "
+                "(отклонение от начальной массы ожидаемо - граница/отбор/импульсы)"
+            )
         report_solver_convergence_summary(scenario["pulse_info"])
 
         if scenario.get("D_drop_start_radius") is not None:
@@ -112,6 +123,31 @@ def main():
             print(
                 f"Инверсия пика: t={scenario['peak_inversion'][0]:.2f} мкс, "
                 f"радиус пика={scenario['peak_inversion'][1]:.1f} нм"
+            )
+
+        if scenario["mass_inversion"] is None:
+            print("Инверсия по массе (переходная зона/синапс): не обнаружена")
+        else:
+            mass_time, mass_ratio, mass_tr, mass_syn = scenario["mass_inversion"]
+            print(
+                "Инверсия по массе (переходная зона/синапс): t={:.2f} мкс, отношение={:.3f}, "
+                "масса переходной зоны={:.3e}, масса синапса={:.3e}".format(
+                    mass_time, mass_ratio, mass_tr, mass_syn
+                )
+            )
+
+        exposure = scenario.get("excitotoxic_exposure")
+        if exposure is None:
+            print("Внесинаптическая экспозиция: не рассчитана (зона за радиусом пуста)")
+        else:
+            print(
+                "Внесинаптическая экспозиция (r>={:.1f} нм): пик массы={:.3e} при t={:.2f} мкс, "
+                "накопленная доза x время={:.3e}".format(
+                    exposure["extrasynaptic_radius"],
+                    exposure["peak_mass_extra"],
+                    exposure["peak_time"],
+                    exposure["exposure_total"],
+                )
             )
 
         if scenario["entropy_checks"]:
@@ -184,6 +220,11 @@ def main():
             config.Omega_transition_kind,
             config.Omega_transition_steepness,
             config.outer_boundary_mode,
+            k_cleft=config.k_cleft,
+            k_pm=config.k_pm,
+            k_transition_kind=config.k_transition_kind,
+            k_transition_steepness=config.k_transition_steepness,
+            normalization_mode=config.normalization_mode,
         )
         print("")
         report_theory_scan(theory_results)

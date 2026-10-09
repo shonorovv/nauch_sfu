@@ -62,6 +62,19 @@ def Omega_variable(r_values, Omega_cleft, Omega_pm, xi_s, a, b, transition_kind,
     return Omega_cleft + weight * (Omega_pm - Omega_cleft)
 
 
+def k_variable(r_values, k_cleft, k_pm, xi_s, a, b, transition_kind, transition_steepness):
+    """
+    Радиально-зависимый коэффициент отбора (uptake) k(r), 1/мкс.
+
+    Описывает потерю вещества (например, захват транспортёрами), которая
+    отсутствовала в исходной модели чистого переноса. Отбор входит в
+    уравнение как сток -k(r)*c и не влияет на поток через грани ячеек.
+    Чтобы отключить: k_cleft=0, k_pm=0 (по умолчанию модель без отбора).
+    """
+    weight = transition_weight(r_values, transition_kind, xi_s, a, b, transition_steepness)
+    return k_cleft + weight * (k_pm - k_cleft)
+
+
 def find_transition_start_radius(r_values, D_values, D_cleft, D_pm, fraction=0.05):
     """Ищет радиус, где D(r) начинает заметно отклоняться от D_cleft."""
     if D_values.size == 0:
