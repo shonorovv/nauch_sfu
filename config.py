@@ -283,3 +283,60 @@ V = np.array([
 ])
 _y = np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 xi_s = lin.solve(V, _y)
+
+# =============================================================================
+# [РУЧНОЕ ЗАПОЛНЕНИЕ] Абсолютные единицы (мкМ) и отбор в физических единицах
+# Добавлено к встрече 09.10.2026 - верификация модели на экспериментальных данных.
+#
+# КАК ВКЛЮЧИТЬ:
+#   normalization_mode = "concentration"   (в блоке "Нормировка" выше)
+#   -> pulse_amount автоматически станет = molecules_per_release (молекул),
+#      и c(r,t) можно перевести в мкМ через utils/units.py:
+#      c_мкМ = c * solver_to_uM_factor(extracellular_volume_fraction, geometry_mode)
+#
+#   uptake_kind = "saturable"              (в блоке "Отбор" выше)
+#   + use_physical_uptake_units = True
+#   -> Km и Vmax ниже (в мкМ и мкМ/мкс) переводятся в единицы решателя.
+#
+# В режиме "probability" этот блок НИЧЕГО не меняет - старые расчёты
+# воспроизводятся как раньше.
+# =============================================================================
+molecules_per_release = 3000.0        # молекул глутамата на один выброс.
+                                      # Zheng, Scimemi, Rusakov 2008 (Biophys J): 2000-3000,
+                                      # модель там брала 3000. Matthews et al. 2022: 7000-8000 на везикулу.
+extracellular_volume_fraction = 0.2   # α, доля внеклеточного объёма. Zheng 2008: 0.13-0.20 (CA1).
+cleft_height_nm = 20.0                # высота щели; нужна только для geometry_mode = "cylindrical"
+
+# --- Отбор транспортёрами EAAT (Михаэлис-Ментен) в физических единицах ---
+use_physical_uptake_units = True
+# Km: TODO - НЕ ПРОВЕРЕНО по первоисточнику. В литературе для EAAT встречаются
+# значения от ~10 до ~100 мкМ в зависимости от подтипа и препарата. 20 мкМ - рабочая
+# оценка; перед защитой взять конкретное число со ссылкой.
+Km_uM = 20.0
+# Vmax оцениваем как [транспортёры] * скорость оборота цикла (Zheng 2008):
+#   эквивалент транспортёров во внеклеточном объёме ~0.2 мМ = 200 мкМ,
+#   верхняя скорость цикла k_c ~0.05 мс^-1 = 5e-5 мкс^-1.
+transporter_concentration_uM = 200.0
+transporter_cycling_rate_per_us = 0.05 / 1000.0
+Vmax_pm_uM_per_us = transporter_concentration_uM * transporter_cycling_rate_per_us   # = 0.01 мкМ/мкс
+# Внутри щели транспортёров почти нет (Zheng 2008: не больше ~20-30 штук) -> 0.
+Vmax_cleft_uM_per_us = 0.0
+# ОГРАНИЧЕНИЕ: Михаэлис-Ментен с Vmax по скорости цикла описывает медленный
+# стационарный захват. Быстрое связывание глутамата транспортёрами (буферизация,
+# субмиллисекундная шкала, Diamond & Jahr 1997) так НЕ описывается - для этого
+# нужна кинетическая схема связывания (отдельная задача).
+
+# --- Порог для внесинаптических NMDA-R в мкМ (для verification-скрипта) ---
+# Herman, Nahir, Jahr 2011 (PLoS ONE): эквивалент ~0.25 мкМ глутамата уже
+# даёт сильный NMDA-Ca2+ сигнал в шипиках. Фон в норме ~0.025 мкМ (Herman & Jahr 2007).
+extrasynaptic_nmda_threshold_uM = 0.25
+ambient_glutamate_uM = 0.025
+
+if str(normalization_mode).lower() == "concentration":
+    from utils.units import uptake_to_solver_units as _uptake_to_solver_units
+    pulse_amount = molecules_per_release
+    if str(uptake_kind).lower() == "saturable" and use_physical_uptake_units:
+        Km, Vmax_cleft, Vmax_pm = _uptake_to_solver_units(
+            Km_uM, Vmax_cleft_uM_per_us, Vmax_pm_uM_per_us,
+            extracellular_volume_fraction, geometry_mode, cleft_height_nm,
+        )

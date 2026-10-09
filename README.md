@@ -211,3 +211,28 @@ python -m unittest tests.test_validation -v
 - Анимации (если `enable_animation = True`)
 - Данные в форматах `.npz` и `.csv`
 - Текстовые отчёты `.txt`
+
+---
+
+## Верификация на экспериментальных данных (добавлено 09.10.2026)
+
+Сравнение модели с литературой в абсолютных единицах (мкМ):
+
+```bash
+python -m scenarios.verification              # литературные D, отбор EAAT, без дрейфа
+python -m scenarios.verification --compare    # + D из курсовой
+python -m scenarios.verification --scan       # перебор D_cleft x D_pm, функция потерь
+python -m scenarios.verification --no-uptake  # без отбора
+python -m scenarios.verification --omega      # с дрейфом Omega из config.py
+```
+
+Результаты: `verification_outputs/` (`verification.png`, `summary.json`).
+
+Что сравнивается:
+- средняя концентрация в синапсе и время её спада - Clements et al., 1992 (~1 мМ, τ ~1 мс);
+- длина спада пика концентрации λ - Matthews et al., 2022 (iGluSnFR, λ ≈ 1.2 мкм);
+- радиус, до которого превышен порог внесинаптических NMDA-R (~0.25 мкМ, Herman et al., 2011).
+
+Новые параметры в `config.py` (блок «Абсолютные единицы»): `molecules_per_release`,
+`extracellular_volume_fraction` (α), `Km_uM`, `Vmax_pm_uM_per_us`, `Vmax_cleft_uM_per_us`.
+Перевод единиц: `utils/units.py`. Тесты: `python -m unittest tests.test_units tests.test_validation`.

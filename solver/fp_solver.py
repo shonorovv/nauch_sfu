@@ -224,7 +224,11 @@ def solve_fp_equation(
 
     # Хранение истории с прореживанием: не более max_saved_frames кадров
     max_saved = max(int(getattr(config, 'max_saved_frames', 2000)), 1)
-    save_stride = max(1, n_t // max_saved)
+    # ИСПРАВЛЕНО 09.10.2026: было n_t // max_saved (округление вниз). Если n_t не
+    # делилось нацело, сохранений получалось больше, чем n_alloc, и хвост расчёта
+    # молча отбрасывался (например, t_max=5000, dt=0.5 -> сохранялось только до 4000 мкс).
+    # Округление вверх гарантирует, что все кадры до t_max помещаются в n_alloc.
+    save_stride = max(1, -(-(n_t - 1) // max_saved))
     n_alloc = max_saved + 2
     p_history = np.zeros((n_r, n_alloc), dtype=np.float64)
     t_saved = np.zeros(n_alloc, dtype=np.float64)
