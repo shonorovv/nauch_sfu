@@ -25,3 +25,16 @@ _test_write.py
 test_write.py
 test_w.py
 *.log
+
+# Данные и результаты для научного руководителя (добавлено 10.10.2026)
+!data/*.json
+!data/*.xlsx
+!fit_outputs/*.png
+!fit_outputs/*.json
+!presentation/*.pdf
+!verification_outputs/*.png
+!verification_outputs/*.json
+
+# Статьи (авторские права) и установщики в репозиторий не кладём
+refs/
+*.exe

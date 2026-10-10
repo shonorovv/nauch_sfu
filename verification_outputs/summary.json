@@ -1,0 +1,127 @@
+{
+  "params": {
+    "D_cleft": 330.0,
+    "D_pm": 320.0,
+    "molecules": 3000.0,
+    "alpha": 0.2,
+    "Km_uM": 20.0,
+    "Vmax_cleft_uM_per_us": 0.0,
+    "Vmax_pm_uM_per_us": 0.01
+  },
+  "targets": {
+    "cleft_peak_uM": {
+      "value": 1000.0,
+      "weight": 1.0,
+      "source": "Clements et al. 1992: пик в щели ~1 мМ"
+    },
+    "cleft_decay_us": {
+      "value": 1000.0,
+      "weight": 0.5,
+      "source": "Clements et al. 1992: τ ~1 мс (оспаривается, вес 0.5)"
+    },
+    "lambda_um": {
+      "value": 1.2,
+      "weight": 1.0,
+      "source": "Matthews et al. 2022: iGluSnFR, λ = 1.2 ± 0.05 мкм"
+    }
+  },
+  "uptake": true,
+  "omega": [
+    0.0,
+    0.0
+  ],
+  "runs": {
+    "literature": {
+      "cleft_peak_uM": 743.2959395754073,
+      "cleft_decay_us": 36.0,
+      "probes": [
+        {
+          "r_nm": 199.0,
+          "peak_uM": 228.5270019013252,
+          "t_peak_us": 19.5,
+          "time_above_threshold_us": 2578.5
+        },
+        {
+          "r_nm": 399.0,
+          "peak_uM": 28.743301497392103,
+          "t_peak_us": 81.0,
+          "time_above_threshold_us": 2511.0
+        },
+        {
+          "r_nm": 499.0,
+          "peak_uM": 14.518716612184127,
+          "t_peak_us": 126.0,
+          "time_above_threshold_us": 2466.0
+        },
+        {
+          "r_nm": 999.0,
+          "peak_uM": 1.5749675729669883,
+          "t_peak_us": 465.0,
+          "time_above_threshold_us": 2086.5
+        },
+        {
+          "r_nm": 1499.0,
+          "peak_uM": 0.3638270934573704,
+          "t_peak_us": 919.5,
+          "time_above_threshold_us": 1114.5
+        },
+        {
+          "r_nm": 1999.0,
+          "peak_uM": 0.11102820018497457,
+          "t_peak_us": 1429.5,
+          "time_above_threshold_us": 0.0
+        }
+      ],
+      "lambda_um": 0.3084826348120804,
+      "r_above_threshold_nm": 1647.0,
+      "molecules_left_end": 99.29575555983108,
+      "loss": 7.458562592769613
+    },
+    "coursework": {
+      "cleft_peak_uM": 743.2959395754073,
+      "cleft_decay_us": 1189.5,
+      "probes": [
+        {
+          "r_nm": 199.0,
+          "peak_uM": 235.93127675946755,
+          "t_peak_us": 664.5,
+          "time_above_threshold_us": 4935.5
+        },
+        {
+          "r_nm": 399.0,
+          "peak_uM": 17.541478731977715,
+          "t_peak_us": 5000.0,
+          "time_above_threshold_us": 3824.0
+        },
+        {
+          "r_nm": 499.0,
+          "peak_uM": 0.20999404876415528,
+          "t_peak_us": 5000.0,
+          "time_above_threshold_us": 0.0
+        },
+        {
+          "r_nm": 999.0,
+          "peak_uM": 8.93214242757462e-23,
+          "t_peak_us": 5000.0,
+          "time_above_threshold_us": 0.0
+        },
+        {
+          "r_nm": 1499.0,
+          "peak_uM": 2.6385536143571317e-64,
+          "t_peak_us": 5000.0,
+          "time_above_threshold_us": 0.0
+        },
+        {
+          "r_nm": 1999.0,
+          "peak_uM": 1.5842640211761727e-124,
+          "t_peak_us": 5000.0,
+          "time_above_threshold_us": 0.0
+        }
+      ],
+      "lambda_um": 0.005524752125813589,
+      "r_above_threshold_nm": 495.0,
+      "molecules_left_end": 2437.7618426972294,
+      "loss": 29.05648707718796
+    }
+  }
+}
