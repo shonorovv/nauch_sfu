@@ -35,6 +35,10 @@ test_w.py
 !verification_outputs/*.png
 !verification_outputs/*.json
 
+# Единая модель (добавлено 13.10.2026)
+!unified_outputs/*.png
+!unified_outputs/*.json
+
 # Статьи (авторские права) и установщики в репозиторий не кладём
 refs/
 *.exe

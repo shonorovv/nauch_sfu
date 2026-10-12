@@ -236,3 +236,17 @@ python -m scenarios.verification --omega      # с дрейфом Omega из con
 Новые параметры в `config.py` (блок «Абсолютные единицы»): `molecules_per_release`,
 `extracellular_volume_fraction` (α), `Km_uM`, `Vmax_pm_uM_per_us`, `Vmax_cleft_uM_per_us`.
 Перевод единиц: `utils/units.py`. Тесты: `python -m unittest tests.test_units tests.test_validation`.
+
+---
+
+## Единая модель по экспериментальным данным (13.10.2026)
+
+Модель из `main.py` подогнана методом наименьших квадратов сразу ко всем экспериментальным наборам (Matthews 2022, Clements 1992): один набор параметров, χ² = 55,1 на 60 точках 7 наборов (χ²/ст. св. = 1,06). Исходные параметры `config.py` на тех же данных дают χ² = 984,2.
+
+```bash
+python -m scenarios.unified_fit --original     # исходная модель на всех данных
+python -m scenarios.unified_fit                # единая подгонка
+python -m scenarios.build_data_xlsx            # таблица data/experimental_points.xlsx
+```
+
+Подробно (данные, моменты времени, расстояния, усреднение, отличия от исходной модели, ограничения): [docs/unified_model.md](docs/unified_model.md). Презентация: `presentation/unified_model_2026-10-13.pdf`. Результаты: `unified_outputs/`.

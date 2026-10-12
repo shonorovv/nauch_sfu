@@ -15,8 +15,8 @@ scenarios/verification.py - Верификация модели на экспе�
      - пик концентрации на разных расстояниях и длина спада λ
        -> сравнение с Matthews et al., 2022 (iGluSnFR: λ ≈ 1.2 мкм;
           NMDA-R при uncaging: λ ≈ 1.5 мкм);
-     - до какого радиуса и сколько времени концентрация выше порога
-       активации внесинаптических NMDA-R (~0.25 мкМ, Herman et al., 2011).
+     - до какого радиуса и сколько времени концентрация выше условного
+       уровня 0.25 мкМ (ориентир для графика, не измеренный порог NMDA-R).
 4) Считает loss - сумму квадратов логарифмов отношений модель/данные
    (метод наименьших квадратов в относительной шкале, потому что
    величины разных единиц и масштабов).
@@ -193,7 +193,7 @@ def compute_metrics(sim):
     else:
         m["lambda_um"] = float("nan")
 
-    # --- (г) Радиус, до которого пик выше порога NMDA-R ---
+    # --- (г) Радиус, до которого пик выше условного уровня 0.25 мкМ ---
     above = np.where(peak_c >= thr)[0]
     m["r_above_threshold_nm"] = float(r[above[-1]]) if above.size else 0.0
 
@@ -225,7 +225,7 @@ def print_report(title, metrics):
     print(f"  loss = {loss(metrics):.3f}")
     print(f"  Порог NMDA-R {config.extrasynaptic_nmda_threshold_uM} мкМ превышен до r = "
           f"{metrics['r_above_threshold_nm']:.0f} нм")
-    print("  r, нм   пик, мкМ   t пика, мкс   время выше порога, мкс")
+    print("  r, нм   пик, мкМ   t пика, мкс   время выше 0.25 мкМ, мкс")
     for p in metrics["probes"]:
         print(f"  {p['r_nm']:6.0f}  {p['peak_uM']:9.3f}  {p['t_peak_us']:11.1f}  "
               f"{p['time_above_threshold_us']:12.1f}")
@@ -249,7 +249,7 @@ def plot_results(runs, path):
     rr = np.linspace(0.4, 2.0, 50)
     axes[1].semilogy(rr, 30.0 * np.exp(-(rr - 0.4) / 1.2), "k--", label="наклон λ = 1.2 мкм (Matthews 2022)")
     axes[1].axhline(config.extrasynaptic_nmda_threshold_uM, color="r", ls=":",
-                    label=f"порог NMDA-R ~{config.extrasynaptic_nmda_threshold_uM} мкМ")
+                    label=f"условный уровень {config.extrasynaptic_nmda_threshold_uM} мкМ")
     axes[1].set_xlabel("r, мкм"); axes[1].set_ylabel("пик C(r), мкМ")
     axes[1].set_title("Спилловер: пик концентрации от расстояния")
     axes[1].legend(fontsize=8); axes[1].grid(alpha=0.3)
