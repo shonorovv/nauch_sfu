@@ -234,12 +234,33 @@
 2. Профили χ² для D_cleft, a и s вместо ковариационных ошибок.
 3. Проверить, заменяет ли буферизация дрейф снаружи.
 
-## 10. Источники
+## 10. Источники (ссылки проверены 13.10.2026)
 
-- Clements J.D., Lester R.A.J., Tong G., Jahr C.E., Westbrook G.L. (1992) Science 258:1498-1501.
-- Matthews E.A. et al. (2022) Cerebral Cortex 32:3669-3689, DOI 10.1093/cercor/bhab440.
-- Lotter S. et al. (2021) Synaptic Channel Modeling for DMC: Neurotransmitter Uptake and Spillover in the Tripartite Synapse. IEEE Trans Commun 69:1462 (параметры щели и захвата).
-- Jonas P., Major G., Sakmann B. (1993) J Physiol 472:615-663; константы по Franks K.M., Stevens C.F., Sejnowski T.J. (2003) J Neurosci 23:3186-3195.
-- Zheng K., Scimemi A., Rusakov D.A. (2008) Biophys J 95:4584; Nicholson C., Syková E. (1998) Trends Neurosci 21:207.
-- Diamond J.S., Jahr C.E. (1997) J Neurosci 17:4672; Diamond J.S. (2005) J Neurosci 25:2906; Helassa N. et al. (2018) PNAS 115:5594.
-- Sylantyev S. et al. (2008) Science 319:1845.
+Данные:
+- Matthews E.A. et al. (2022) Cerebral Cortex 32(17):3669-3689. https://doi.org/10.1093/cercor/bhab440 (открытый доступ: https://pmc.ncbi.nlm.nih.gov/articles/PMC9433421/). Fig. 1F, 2A, 2D, 3B, 3C (подгонка), 4C, 4D (проверка).
+- Clements J.D., Lester R.A., Tong G., Jahr C.E., Westbrook G.L. (1992) Science 258(5087):1498-1501. https://doi.org/10.1126/science.1359647. Fig. 1D (подгонка), Fig. 3A (схема NMDA), Fig. 3C (проверка).
+
+Параметры и схемы:
+- Lotter S., Ahmadzadeh A., Schober R. (2021) IEEE Trans Commun. https://doi.org/10.1109/TCOMM.2020.3040318 (arXiv: https://arxiv.org/abs/2005.09108). Размеры щели, N = 3000, D в щели 0,33 мкм²/мс, константа захвата глии.
+- Zheng K., Scimemi A., Rusakov D.A. (2008) Biophys J 95(10):4584-4596. https://doi.org/10.1529/biophysj.108.129874. D снаружи 0,32 мкм²/мс.
+- Nicholson C., Syková E. (1998) Trends Neurosci 21(5):207-215. Доля внеклеточного объёма α = 0,2.
+- Jonas P., Major G., Sakmann B. (1993) J Physiol 472:615-663. https://doi.org/10.1113/jphysiol.1993.sp019965. Схема AMPA; числа по Franks K.M., Stevens C.F., Sejnowski T.J. (2003) J Neurosci 23(8):3186-3195, https://www.jneurosci.org/content/23/8/3186.
+
+Проверки:
+- Diamond J.S., Jahr C.E. (1997) J Neurosci 17(12):4672-4687. https://doi.org/10.1523/JNEUROSCI.17-12-04672.1997.
+- Diamond J.S. (2005) J Neurosci 25(11):2906-2916. https://doi.org/10.1523/JNEUROSCI.5125-04.2005.
+- Helassa N. et al. (2018) PNAS 115(21):5594-5599. https://doi.org/10.1073/pnas.1720648115.
+- Sylantyev S. et al. (2008) Science 319:1845-1849 (электродиффузия в щели; DOI не проверен).
+
+## 11. Обновление 13.10.2026: геометрия Barbour (ТЗ, этапы 0-2)
+
+Резкий переход щель → нейропиль (`cleft_disk`) заменён гладким V(r) по Barbour 2001 (`barbour_mixed`), захват считается неявно без обрезки, баланс молекул замкнут до 1e-13. Подробно: `docs/stage02_report.md`.
+
+| Вариант | χ² на 60 точках | AIC |
+|---|---|---|
+| `cleft_disk`, с дрейфом | 55,1 | 71,1 |
+| `barbour_mixed`, с дрейфом | 54,4 | 70,4 |
+| `cleft_disk`, Ω = 0 | 92,1 | 106,1 |
+| `barbour_mixed`, Ω = 0 | 85,1 | 99,1 |
+
+Без дрейфа параметры в геометрии Barbour: a = 175 нм, D_cleft = 13,2 нм²/мкс, N = 6140, PSF 0,70 × 2,38 мкм, N анкейджинга 1,6·10⁵, захват на нижней границе. Записка о монотонности (`docs/monotonicity_note.md`): без дрейфа инверсия профиля в этом классе моделей невозможна.

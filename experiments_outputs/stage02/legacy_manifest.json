@@ -1,0 +1,68 @@
+{
+  "config": {
+    "name": "legacy_coursework",
+    "label": "исторический сценарий курсовой (config.py)",
+    "geometry": "spherical",
+    "a_nm": 200.0,
+    "b_nm": 400.0,
+    "h_nm": 20.0,
+    "alpha": 0.2,
+    "D_cleft": 10.0,
+    "D_pm": 0.5,
+    "Omega_cleft": 0.05,
+    "Omega_pm": 0.15,
+    "uptake": "none",
+    "Vmax_cleft": 0.0,
+    "Vmax_pm": 0.0,
+    "Km": 20.0,
+    "uptake_scheme": "imex",
+    "clip_negative": true,
+    "N": 3000.0,
+    "sigma_nm": 500.0,
+    "window_nm": 500.0,
+    "R_nm": 1000.0,
+    "dr_nm": 0.5,
+    "dt_us": 0.5,
+    "t_max_us": 1000.0,
+    "boundary": "dirichlet",
+    "note": "num_pulses = 100 в config.py, фактически 1 (предел 100 Гц в окне 0-500 мкс); N = 3000 добавлено, чтобы перевести вероятность в концентрацию"
+  },
+  "pulse_schedule_requested_vs_actual": [
+    {
+      "requested": 100,
+      "window_us": [
+        0.0,
+        500.0
+      ],
+      "max_frequency_hz": 100.0,
+      "actual": 1,
+      "first_times_us": [
+        0.0
+      ],
+      "note": "предел частоты из config.py"
+    },
+    {
+      "requested": 100,
+      "window_us": [
+        0.0,
+        500.0
+      ],
+      "max_frequency_hz": 1000000000.0,
+      "actual": 100,
+      "first_times_us": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0,
+        25.5,
+        30.5,
+        35.5,
+        40.5,
+        45.5
+      ],
+      "note": "без предела частоты"
+    }
+  ],
+  "frozen_commit_main": "c05e8866fa6b89a661cd50e09ed6846140ccfa95"
+}

@@ -51,16 +51,16 @@ python main.py
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `D_cleft` | 400 нм²/мкс | Диффузия внутри синапса |
-| `D_pm` | 150 нм²/мкс | Диффузия снаружи |
+| `D_cleft` | 10 нм²/мкс | Диффузия внутри синапса (историческое значение курсовой; измеренное ~330) |
+| `D_pm` | 0.5 нм²/мкс | Диффузия снаружи (историческое; в нейропиле измерено ~320, Zheng 2008) |
 
 ### Временная сетка
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `dt` | 0.05 мкс | Шаг по времени |
-| `dr` | 0.05 нм | Шаг по пространству |
-| `t_max` | 10 000 мкс | Время моделирования |
+| `dt` | 0.5 мкс | Шаг по времени |
+| `dr` | 0.5 нм | Шаг по пространству |
+| `t_max` | 1000 мкс | Время моделирования (`base_t_max / time_divider`) |
 
 ### Дрейф (Omega)
 
@@ -84,9 +84,9 @@ python main.py
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `num_pulses` | 50 | Количество импульсов (0 = без импульсов) |
+| `num_pulses` | 100 | Запрошено импульсов. При `pulse_max_frequency_hz = 100` в окне 0-500 мкс фактически ставится 1 (решатель печатает предупреждение; `strict_pulse_count = True` делает это ошибкой) |
 | `pulse_amount` | 5.0 | Доля вероятности, добавляемая каждым импульсом |
-| `pulse_sigma_nm` | 35 нм | Ширина гауссова импульса |
+| `pulse_sigma_nm` | 500 нм | Ширина гауссова импульса (окно `pulse_r_window` = 0-500 нм) |
 
 ### GPU / CPU
 
@@ -132,17 +132,19 @@ diplom/
 ├── backend.py              # Автовыбор GPU/CPU (не трогать)
 │
 ├── solver/
-│   └── fp_solver.py        # Решение уравнения Фоккера-Планка
+│   ├── fp_solver.py        # Решение уравнения Фоккера-Планка, баланс массы, схемы захвата
+│   └── geometry.py         # Меры ячеек: spherical, cylindrical, cleft_disk, barbour_mixed
 │
 ├── physics/
-│   ├── diffusion.py        # Коэффициенты диффузии D(r)
-│   └── drift.py            # Коэффициенты дрейфа Omega(r)
+│   ├── transport.py        # D(r), Omega(r), k(r): сглаженные переходы
+│   └── pulses.py           # Источник (гаусс) и расписание выбросов
 │
 ├── analysis/
 │   ├── scenarios.py        # Сценарии сравнения
 │   ├── entropy.py          # Локальная энтропия, EPR
 │   ├── information.py      # Информационные меры
-│   └── inversion.py        # Обнаружение инверсии распределения
+│   ├── inversion.py        # Исторические детекторы (масса областей, сдвиг пика)
+│   └── inversion_concentration.py  # Инверсия ЛОКАЛЬНОЙ концентрации с абсолютным порогом
 │
 ├── visualization/
 │   ├── plots.py            # Статические графики
@@ -155,14 +157,25 @@ diplom/
 │   └── reports.py          # Текстовые отчёты
 │
 ├── scenarios/
-│   └── supervisor_revision.py  # Сценарии для ревизии научрука
+│   ├── supervisor_revision.py  # Исторические сценарии (legacy)
+│   ├── unified_fit.py      # Единая подгонка ко всем экспериментам
+│   └── observation.py      # Модели наблюдения: датчик iGluSnFR, NMDA, AMPA
+│
+├── experiments/
+│   ├── configs.py          # Именованные конфигурации: legacy_coursework, baseline_physical, with_uptake, exploratory_drift
+│   └── run_stage02.py      # Сдача этапов 0-2 ТЗ 13.10.2026
+│
+├── docs/                   # unified_model.md, monotonicity_note.md, stage02_report.md
 │
 ├── utils/                  # Вспомогательные утилиты
 │
 ├── tests/
-│   └── test_validation.py  # Валидация решателя (сохранение массы,
-│                            # неотрицательность, сеточная сходимость,
-│                            # сравнение с полуаналитическим решением)
+│   ├── test_validation.py  # Исторические проверки решателя
+│   ├── test_units.py       # Перевод единиц
+│   ├── test_geometry_mixed.py   # Геометрия Barbour, источник N молекул, аналитика 2D/3D, граница R
+│   ├── test_mass_budget.py      # Замкнутый баланс молекул
+│   ├── test_uptake_physical.py  # Неявный захват: позитивность, пределы c<<Km и c>>Km, сходимость по dt
+│   └── test_inversion_physics.py  # Контроли монотонности (docs/monotonicity_note.md)
 │
 ├── ИНСТРУКЦИЯ.md           # Подробная инструкция по параметрам
 └── CUDA_ИНСТРУКЦИЯ.md      # Инструкция по установке CuPy/CUDA
@@ -189,6 +202,8 @@ diplom/
 
 ```bash
 python -m unittest tests.test_validation -v
+python -m unittest discover -s tests -v          # все тесты (CPU)
+python -m experiments.run_stage02                # этапы 0-2: три случая, баланс, проверки PASS/FAIL
 ```
 
 ---

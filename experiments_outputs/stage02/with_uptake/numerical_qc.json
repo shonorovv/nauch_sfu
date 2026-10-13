@@ -1,0 +1,13 @@
+{
+  "balance_rel_error_max": 2.5863992429246235e-13,
+  "min_c_preclip_solver_units": 0.0,
+  "negative_values_after_step": 0,
+  "grid_convergence_rel_diff_dr_dt_halved": 0.00027414342161907024,
+  "R_sensitivity_rel_diff_R_x1.5": 0.0,
+  "solver_failed_steps": 0,
+  "solver_checked_steps": 400,
+  "uptake_scheme": "split_implicit",
+  "clip_negative": false,
+  "pulses": 1,
+  "seconds": 1.1899909973144531
+}

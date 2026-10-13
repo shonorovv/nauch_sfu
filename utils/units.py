@@ -66,10 +66,10 @@ def geometry_factor(geometry_mode="spherical", cleft_height_nm=20.0):
 def solver_to_uM_factor(alpha, geometry_mode="spherical", cleft_height_nm=20.0):
     """Множитель: c_мкМ = c_решателя * factor.
 
-    Для geometry_mode = "cleft_disk" меры решателя - настоящие объёмы жидкости,
+    Для geometry_mode = "cleft_disk" и "barbour_mixed" меры решателя - настоящие объёмы жидкости,
     c уже в молекулах на нм³ жидкости, поэтому множитель не зависит от α и h.
     """
-    if str(geometry_mode).lower() in ("cleft_disk", "disk", "cleft"):
+    if str(geometry_mode).lower() in ("cleft_disk", "disk", "cleft", "barbour_mixed", "barbour", "mixed"):
         return MOLECULES_PER_NM3_TO_UM
     alpha = float(alpha)
     if alpha <= 0.0:

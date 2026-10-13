@@ -24,6 +24,8 @@ VARIANTS = [  # (файл отчёта, подпись)
     ("unified_literature_report.json", "единая, a и захват из литературы"),
     ("unified_D330_report.json", "единая, D_cleft = 330 (измеренный)"),
     ("unified_with_ampa_report.json", "единая, AMPA включён в подгонку"),
+    ("barbour_exploratory_drift_report.json", "геометрия Barbour, с дрейфом"),
+    ("barbour_baseline_physical_report.json", "геометрия Barbour, Ω = 0"),
 ]
 MAIN = "unified_report.json"
 

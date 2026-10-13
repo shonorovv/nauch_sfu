@@ -107,7 +107,15 @@ theory_scan_d_pm_values = (2.0, 5.0, 10.0, 20.0, 40.0, D_cleft)
 theory_scan_t_max = t_max
 active_omega_case = "q_3q_слева"
 outer_boundary_mode = "dirichlet"   # "dirichlet" | "no_flux"
-geometry_mode = "spherical"         # "spherical" | "cylindrical"
+geometry_mode = "spherical"         # "spherical" | "cylindrical" | "cleft_disk" | "barbour_mixed"
+# barbour_mixed (13.10.2026): V(r) = πhr² в щели, α·4πr³/3 в нейропиле, гладкий переход между
+# geometry_a_nm и geometry_b_nm (Barbour 2001). Физическая ветка задаёт эти значения явно
+# (experiments/configs.py); здесь - значения по умолчанию.
+geometry_a_nm = a
+geometry_b_nm = b
+# Строгая проверка расписания: True - ошибка, если поставлено меньше импульсов, чем запрошено
+# (например, из-за pulse_max_frequency_hz). False - только предупреждение (историческое поведение).
+strict_pulse_count = False
 
 # --- Нормировка и физическая интерпретация p(r,t) ---
 # "probability"   - p(r,t) есть вероятность найти ОДНУ частицу; масса

@@ -1,0 +1,18 @@
+{
+  "inversion": {
+    "found": true,
+    "t_first_us": 1.0,
+    "r_left_nm": 0.25,
+    "r_right_nm": 158.25,
+    "delta_c_uM": 14.631618965149848,
+    "ratio_c": 1.4233746397502116,
+    "duration_us": 1000.0,
+    "max_positive_gradient_uM_per_nm": 0.289078563603411,
+    "peak_shift_nm": 162.75
+  },
+  "cleft_mean_peak_uM": 60.68859348768536,
+  "cleft_mean_decay_1_over_e_us": null,
+  "fraction_uptaken": 0.0,
+  "fraction_escaped": 4.538882287699002e-27,
+  "fraction_free_end": 1.0000000000000997
+}

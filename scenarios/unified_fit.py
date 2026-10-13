@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 import config
 config.realtime_modeling = False
 from solver.fp_solver import solve_fp_equation
-from solver.geometry import radial_cell_measures
+from solver.geometry import radial_cell_measures, radial_face_measures
 from utils.units import solver_to_uM_factor, uptake_to_solver_units
 from scenarios.observation import epsc_ratio, sensor_peak, a2r_peak_per_node, ampa_open_peak_per_node
 
@@ -158,7 +158,8 @@ def run(p, grid, geometry="cleft_disk", molecules=None, sigma=None, omega=True):
     settings = dict(geometry_mode=geometry, realtime_modeling=False, pulse_center_nm=0.0,
                     pulse_sigma_nm=sig, pulse_max_frequency_hz=1e9, max_saved_frames=4000,
                     cleft_radius_nm=a, cleft_height_nm=p["cleft_height_nm"],
-                    extracellular_volume_fraction=p["alpha"])
+                    extracellular_volume_fraction=p["alpha"], geometry_a_nm=a, geometry_b_nm=b)
+    physical = geometry == "barbour_mixed"   # новая физическая ветка: позитивная схема захвата и баланс массы
     with temporary_global_settings(**settings):
         Km_s, Vc_s, Vp_s = uptake_to_solver_units(p["Km"], p["Vmax_cleft"], p["Vmax_pm"], p["alpha"], geometry,
                                                   p["cleft_height_nm"])
@@ -173,11 +174,23 @@ def run(p, grid, geometry="cleft_disk", molecules=None, sigma=None, omega=True):
             outer_boundary_mode="dirichlet", normalization_mode="concentration",
             uptake_kind="saturable" if p["Vmax_pm"] > 0 or p["Vmax_cleft"] > 0 else "none",
             Vmax_cleft=Vc_s, Vmax_pm=Vp_s, Km=Km_s,
+            uptake_scheme="split_implicit" if physical else "imex",
+            clip_negative=not physical, track_mass=physical,
         )
         dV = radial_cell_measures(r, grid["dr"], geometry)
+        face = radial_face_measures(r, geometry)
         factor = solver_to_uM_factor(p["alpha"], geometry, p["cleft_height_nm"])
-    assert info["count"] == 1
-    return {"r": r, "t": t, "c": p_hist * factor, "dV": dV, "molecules_left": (p_hist * dV[:, None]).sum(0)}
+    if info["count"] != 1:
+        raise RuntimeError(f"Ожидался ровно 1 выброс, решатель сделал {info['count']}")
+    out = {"r": r, "t": t, "c": p_hist * factor, "dV": dV, "molecules_left": (p_hist * dV[:, None]).sum(0),
+           "geometry": geometry, "mass_budget": info.get("mass_budget", {})}
+    if physical:
+        # локальная доля объёма, занятая жидкостью с датчиком: A(r)/(4πr²) (в щели h/(2r), в нейропиле α)
+        out["fluid_fraction"] = face / (4.0 * np.pi * np.maximum(r, 1e-9) ** 2)
+        mb = out["mass_budget"]
+        if mb.get("min_c_preclip", 0.0) < -1e-12 * max(float(np.max(p_hist)), 1e-30):
+            raise RuntimeError(f"Отрицательная концентрация до обрезки: {mb['min_c_preclip']}")
+    return out
 
 
 def blur_line(values_r, r_um, xs_um, fxy, fz, step=0.05):
@@ -217,7 +230,9 @@ def sensor_profile(fine, long, p, xs_um, cleft=True):
     # снаружи щели это доля α, внутри шара r < a реальна только щель-диск π·a²·h,
     # поэтому вес 3h/(4a) (объём диска / объём шара). Для сферической геометрии вес α везде.
     wfl = np.full(r.size, p["alpha"])
-    if cleft:
+    if "fluid_fraction" in long:
+        wfl = np.minimum(long["fluid_fraction"], 1.0)
+    elif cleft:
         wfl[r < p["cleft_radius_nm"]] = 3.0 * p["cleft_height_nm"] / (4.0 * p["cleft_radius_nm"])
     prof = blur_line(Bmax * wfl, r / 1000.0, np.concatenate([[0.0], xs_um]), p["psf_xy_um"], p["psf_z_um"])
     return prof[1:] / prof[0]
@@ -267,13 +282,13 @@ def finish(out, curves, fine, p, want_curves, data):
 
 
 def evaluate(p, data, want_curves=False, original=False, with_validation=False):
-    geom = "spherical" if original else "cleft_disk"
+    geom = "spherical" if original else p.get("geometry", "cleft_disk")
     fine = run(p, GRID_FINE, geometry=geom)
     long = run(p, GRID_LONG, geometry=geom)
     out, curves = {}, {}
     syn_ids = ["matthews2022_fig1F", "matthews2022_fig2A_small", "matthews2022_fig2D_spont"]
     xs_all = np.linspace(0, 6, 61)
-    prof_fine = sensor_profile(fine, long, p, cleft=(geom == "cleft_disk"), xs_um=np.concatenate([xs_all, np.unique(np.concatenate([arr(data[i])[0] for i in syn_ids]))]))
+    prof_fine = sensor_profile(fine, long, p, cleft=(geom in ("cleft_disk", "barbour_mixed")), xs_um=np.concatenate([xs_all, np.unique(np.concatenate([arr(data[i])[0] for i in syn_ids]))]))
     prof_curve, prof_pts = prof_fine[:xs_all.size], prof_fine[xs_all.size:]
     xs_pts = np.unique(np.concatenate([arr(data[i])[0] for i in syn_ids]))
     for i in syn_ids:
@@ -395,6 +410,8 @@ def main():
     ap.add_argument("--from-report", default=None, help="пересчитать и перерисовать по параметрам из *_report.json без подгонки")
     ap.add_argument("--tag", default=None, help="имя выходных файлов")
     ap.add_argument("--fix", nargs="*", default=[], help="зафиксировать параметры: имя=значение (убираются из подгонки)")
+    ap.add_argument("--geometry", default=None, choices=["cleft_disk", "barbour_mixed"],
+                    help="геометрия: cleft_disk (резкий переход, 12.10) или barbour_mixed (гладкий V(r) по Barbour 2001)")
     ap.add_argument("--with-ampa", action="store_true", help="включить AMPA (Fig. 4C, 4D) в χ² подгонки")
     ap.add_argument("--start-report", default=None, help="начальная точка подгонки из *_report.json")
     args = ap.parse_args()
@@ -415,6 +432,8 @@ def main():
         kk, vv = item.split("="); base[kk] = float(vv)
         if kk in keys:
             keys.remove(kk)
+    if args.geometry:
+        base["geometry"] = args.geometry
     if args.with_ampa:
         FIT_SETS.extend(VALIDATION_SETS); VALIDATION_SETS.clear()
     if args.tag:

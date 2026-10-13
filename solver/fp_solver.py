@@ -12,6 +12,22 @@ from physics.transport import D_variable, Omega_variable, k_variable
 from physics.pulses import apply_pulse, compute_pulse_schedule
 
 
+def implicit_saturable_uptake(c_star, tau, Km, xp=np):
+    """
+    Точное решение локального неявного шага насыщаемого захвата в каждой ячейке:
+        c + tau*c/(Km + c) = c*,   tau = dt*Vmax(r)
+    <=> c^2 + (Km + tau - c*)*c - Km*c* = 0.
+    Берётся неотрицательный корень; формула выбрана так, чтобы не терять
+    точность при вычитании близких чисел (при bq > 0 и при bq <= 0).
+    Для c* >= 0 результат лежит в [0, c*]; при tau = 0 возвращает c*.
+    """
+    c_pos = xp.maximum(c_star, 0.0)
+    bq = Km + tau - c_star
+    disc = xp.sqrt(bq * bq + 4.0 * Km * c_pos)
+    safe = xp.where(bq > 0.0, bq + disc, 1.0)
+    return xp.where(bq > 0.0, 2.0 * Km * c_pos / safe, 0.5 * (disc - bq))
+
+
 def solve_fp_equation(
     max_r,
     dt,
@@ -49,6 +65,9 @@ def solve_fp_equation(
     Vmax_cleft=0.0,
     Vmax_pm=0.0,
     Km=1.0,
+    uptake_scheme="imex",
+    clip_negative=True,
+    track_mass=False,
 ):
     """
     normalization_mode:
@@ -75,6 +94,26 @@ def solve_fp_equation(
       явной части: dt должен быть заметно меньше Km/Vmax(r) - если это не
       так, ниже выводится предупреждение.
     - "none" - без отбора (k и Vmax игнорируются).
+
+    uptake_scheme (добавлено 13.10.2026, по аудиту P0.4):
+    - "imex" (по умолчанию, прежнее поведение) - насыщаемый сток явно по c
+      с прошлого шага; позитивность не гарантирована, поэтому решение
+      обрезается снизу нулём (clip_negative=True).
+    - "split_implicit" - расщепление: сначала неявный перенос (матрица та же),
+      затем в каждой ячейке локальный НЕЯВНЫЙ шаг реакции
+          c_new + dt·Vmax·c_new/(Km + c_new) = c*,
+      который решается точно (квадратное уравнение, положительный корень).
+      Для c* >= 0 результат всегда в [0, c*]: позитивность без обрезки.
+      Ошибка расщепления O(dt) проверяется сходимостью по dt.
+
+    clip_negative: False - отрицательные значения не обрезаются; минимум до
+      обрезки записывается в info["mass_budget"]["min_c_preclip"].
+
+    track_mass: True - в info["mass_budget"] пишется баланс числа молекул на
+      сохранённых кадрах: released (сколько добавлено импульсами), free
+      (Σ c·ΔV), uptaken (поглощено стоком), escaped (ушло через внешнюю
+      границу), balance_error = released − free − uptaken − escaped.
+      Осмысленно только при normalization_mode="concentration".
     """
     if dt <= 0.0 or dr <= 0.0:
         raise ValueError("dt и dr должны быть положительными.")
@@ -92,6 +131,9 @@ def solve_fp_equation(
     uptake_kind = str(uptake_kind).lower()
     if uptake_kind not in ("linear", "saturable", "none"):
         raise ValueError(f"Неизвестный вид отбора: {uptake_kind}")
+    uptake_scheme = str(uptake_scheme).lower()
+    if uptake_scheme not in ("imex", "split_implicit"):
+        raise ValueError(f"Неизвестная схема отбора: {uptake_scheme}")
 
     n_r = max(int(np.round(max_r / dr)), 1)
     r_values = (np.arange(n_r) + 0.5) * dr
@@ -119,11 +161,11 @@ def solve_fp_equation(
         Vmax_values = k_variable(r_values, Vmax_cleft, Vmax_pm, xi_s, a, b, k_transition_kind, k_transition_steepness)
         Km_value = max(float(Km), config.EPS)
         vmax_peak = float(np.max(Vmax_values)) if Vmax_values.size else 0.0
-        if vmax_peak > 0.0 and dt > 2.0 * Km_value / vmax_peak:
+        if uptake_scheme == "imex" and vmax_peak > 0.0 and dt * vmax_peak / Km_value > 1.0:
             print(
                 f"ПРЕДУПРЕЖДЕНИЕ: явная часть насыщаемого отбора может быть неустойчива "
-                f"(dt={dt:g} > 2*Km/Vmax={2.0 * Km_value / vmax_peak:g}) - уменьшите dt "
-                f"или Vmax, либо увеличьте Km."
+                f"и не сохранять позитивность (dt*Vmax/Km={dt * vmax_peak / Km_value:g} > 1) - "
+                f"уменьшите dt или используйте uptake_scheme='split_implicit'."
             )
 
     face_measures = radial_face_measures(r_faces, geometry_kind)
@@ -144,6 +186,8 @@ def solve_fp_equation(
         diff_bc = 2.0 * face_measures[-1] * D_faces[-1] / dr
         adv_bc = max(float(face_measures[-1] * Omega_faces[-1]), 0.0)
         main_diag[-1] += diff_bc + adv_bc
+    # Коэффициент потока наружу через внешнюю грань: F_out = bc_out * c[-1] (молекул/мкс)
+    bc_out = (diff_bc + adv_bc) if boundary_mode == "dirichlet" else 0.0
     main_diag += K_values * dV  # отбор (uptake): -k(r)*c, неявная по времени добавка на диагональ
 
     matrix = backend.diags(
@@ -210,13 +254,24 @@ def solve_fp_equation(
             segment_default_mode=pulse_segment_default_mode,
         )
         pulse_mask[pulse_indices] = True
+        # Проверка: сколько выбросов запрошено и сколько реально поставлено (ТЗ, этап 0 п. 5).
+        # Ограничение pulse_max_frequency_hz может молча урезать расписание (например, 100 импульсов
+        # в окне 0-500 мкс при 100 Гц превращаются в 1). При config.strict_pulse_count = True это ошибка.
+        if not pulse_segments and int(num_pulses) > 0 and len(pulse_indices) != int(num_pulses):
+            msg = (f"Запрошено импульсов: {int(num_pulses)}, поставлено: {len(pulse_indices)} "
+                   f"(окно {pulse_time_window}, предел частоты {config.pulse_max_frequency_hz} Гц)")
+            if bool(getattr(config, "strict_pulse_count", False)):
+                raise ValueError(msg)
+            print("ПРЕДУПРЕЖДЕНИЕ: " + msg)
 
     p_previous = np.zeros_like(r_values)
+    released_total = 0.0
     if pulse_mask[0]:
         p_previous = apply_pulse(
             p_previous, r_values, pulse_r_window, pulse_amount, dr, geometry_kind,
             renormalize=renormalize,
         )
+        released_total += float(np.sum(p_previous * dV))
         pulse_indices_used.append(0)
         if adaptive_on_decay:
             adaptive_pulses_fired = 1
@@ -272,6 +327,14 @@ def solve_fp_equation(
     solver_converged_steps = 0
     solver_failed_times = []
 
+    # --- Баланс массы (track_mass) ---
+    uptaken_total = 0.0
+    escaped_total = 0.0
+    min_c_preclip = float(np.min(p_previous)) if p_previous.size else 0.0
+    budget = {"t": [float(t_values[0])], "released": [released_total],
+              "free": [float(np.sum(p_previous * dV))], "uptaken": [0.0], "escaped": [0.0]}
+    K_dev = backend.to_gpu(K_values) if uptake_kind == "linear" and np.any(K_values > 0) else None
+
     for t_idx in range(1, n_t):
         if (
             adaptive_on_decay
@@ -291,10 +354,12 @@ def solve_fp_equation(
 
         if pulse_mask[t_idx]:
             p_cpu = backend.to_cpu(p_previous_dev)
+            mass_before_pulse = float(np.sum(p_cpu * dV))
             p_cpu = apply_pulse(
                 p_cpu, r_values, pulse_r_window, pulse_amount, dr, geometry_kind,
                 renormalize=renormalize,
             )
+            released_total += float(np.sum(p_cpu * dV)) - mass_before_pulse
             p_previous_dev = backend.to_gpu(p_cpu)
             pulse_indices_used.append(t_idx)
             if adaptive_on_decay:
@@ -305,12 +370,14 @@ def solve_fp_equation(
                 adaptive_probe_curr = adaptive_probe_prev
 
         backend.xp.multiply(inv_dt_dev, p_previous_dev, out=rhs_dev)
-        if uptake_kind == "saturable":
+        if uptake_kind == "saturable" and uptake_scheme == "imex":
             # Явная (лаговая) добавка насыщаемого стока -Vmax(r)*c/(Km+c),
             # оцененная по c с предыдущего шага (см. docstring выше) -
             # матрица оператора диффузии/дрейфа при этом не меняется.
             reaction_dev = Vmax_dev * p_previous_dev / (Km_value + p_previous_dev)
             rhs_dev -= reaction_dev * dV_dev
+            if track_mass:
+                uptaken_total += dt * float(backend.xp.dot(reaction_dev, dV_dev))
         p_current_dev = solver_fn(rhs_dev)
 
         if t_idx % solver_residual_check_stride == 0 or t_idx == n_t - 1:
@@ -326,7 +393,24 @@ def solve_fp_equation(
             else:
                 solver_failed_times.append(float(t_values[t_idx]))
 
-        backend.xp.maximum(p_current_dev, 0.0, out=p_current_dev)
+        # Учёт потоков переносного шага: уход через внешнюю границу и линейный сток k(r)
+        if track_mass:
+            escaped_total += dt * bc_out * float(p_current_dev[-1])
+            if K_dev is not None:
+                uptaken_total += dt * float(backend.xp.dot(K_dev * p_current_dev, dV_dev))
+        min_c_preclip = min(min_c_preclip, float(backend.xp.min(p_current_dev)))
+
+        if uptake_kind == "saturable" and uptake_scheme == "split_implicit":
+            # Локальный неявный шаг реакции: c + dt*Vmax*c/(Km+c) = c*  ->  c^2 + (Km + tau - c*) c - Km c* = 0
+            # Положительный корень в устойчивой форме; при c* >= 0 он лежит в [0, c*].
+            c_star = p_current_dev
+            c_new = implicit_saturable_uptake(c_star, dt * Vmax_dev, Km_value, backend.xp)
+            if track_mass:
+                uptaken_total += float(backend.xp.dot(c_star - c_new, dV_dev))
+            p_current_dev = c_new
+
+        if clip_negative:
+            backend.xp.maximum(p_current_dev, 0.0, out=p_current_dev)
         if renormalize:
             total = float(backend.xp.dot(p_current_dev, dV_dev))
             if total > 0.0:
@@ -337,6 +421,12 @@ def solve_fp_equation(
                 p_history[:, save_count] = backend.to_cpu(p_current_dev)
                 t_saved[save_count] = t_values[t_idx]
                 save_count += 1
+                if track_mass:
+                    budget["t"].append(float(t_values[t_idx]))
+                    budget["released"].append(released_total)
+                    budget["free"].append(float(backend.xp.dot(p_current_dev, dV_dev)))
+                    budget["uptaken"].append(uptaken_total)
+                    budget["escaped"].append(escaped_total)
 
         if adaptive_on_decay and adaptive_probe_idx is not None:
             adaptive_probe_prev = adaptive_probe_curr
@@ -418,7 +508,14 @@ def solve_fp_equation(
         mean_gap_us = np.inf
         repetition_rate_hz = None
 
+    mass_budget = {"min_c_preclip": float(min_c_preclip), "uptake_scheme": uptake_scheme,
+                   "clip_negative": bool(clip_negative)}
+    if track_mass:
+        mass_budget.update({k: np.asarray(v, dtype=float) for k, v in budget.items()})
+        mass_budget["balance_error"] = (mass_budget["released"] - mass_budget["free"]
+                                        - mass_budget["uptaken"] - mass_budget["escaped"])
     pulse_info = {
+        "mass_budget": mass_budget,
         "segments": pulse_segments_info,
         "count": int(pulse_indices_arr.size),
         "pulse_amount": float(pulse_amount),

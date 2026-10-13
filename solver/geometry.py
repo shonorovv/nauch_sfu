@@ -14,6 +14,19 @@ cleft_disk (добавлено 12.10.2026, единая модель):
     В этом режиме меры - настоящие объёмы жидкости (нм³) и площади (нм²),
     поэтому c решателя - молекулы на нм³ жидкости, без множителей 4π и α.
     Режимы spherical и cylindrical работают как раньше.
+
+barbour_mixed (добавлено 13.10.2026, по Barbour 2001, J Neurosci 21:7969, ур. 2-4):
+    доступный объём внутри радиуса r
+        V(r) = V_cleft(r)                          r <= a
+        V(r) = V_cleft + s(x)·(V_pm − V_cleft)     a < r < b,  x = (r − a)/(b − a)
+        V(r) = V_pm(r)                             r >= b
+    V_cleft = π·h·r², V_pm = α·(4π/3)·r³, s(x) = 6x⁵ − 15x⁴ + 10x³
+    (s(0)=0, s(1)=1, s' и s'' равны 0 на концах - те же условия, что у Barbour).
+    Объём ячейки ΔV_i = V(r_{i+1/2}) − V(r_{i−1/2}) (точно, без квадратур),
+    площадь грани A(r) = dV/dr = (1−s)·V_cleft' + s·V_pm' + s'·(V_pm − V_cleft)/(b − a).
+    a, b = config.geometry_a_nm, config.geometry_b_nm (по умолчанию config.a, config.b),
+    h = config.cleft_height_nm, α = config.extracellular_volume_fraction.
+    Меры - настоящие нм³ и нм², c решателя - молекулы на нм³ доступной жидкости.
 """
 
 import numpy as np
@@ -35,6 +48,9 @@ def normalize_geometry_mode(mode=None):
         "cleft_disk": "cleft_disk",
         "disk": "cleft_disk",
         "cleft": "cleft_disk",
+        "barbour_mixed": "barbour_mixed",
+        "barbour": "barbour_mixed",
+        "mixed": "barbour_mixed",
     }
     if mode not in aliases:
         raise ValueError(f"Неизвестный тип геометрии: {mode}")
@@ -47,6 +63,47 @@ def _cleft_params():
     h = float(getattr(config, "cleft_height_nm", 20.0))
     alpha = float(getattr(config, "extracellular_volume_fraction", 0.2))
     return a_c, h, alpha
+
+
+def _barbour_params():
+    """a, b (границы перехода), h и α для режима barbour_mixed."""
+    a = float(getattr(config, "geometry_a_nm", config.a))
+    b = float(getattr(config, "geometry_b_nm", config.b))
+    h = float(getattr(config, "cleft_height_nm", 20.0))
+    alpha = float(getattr(config, "extracellular_volume_fraction", 0.2))
+    if not (b > a > 0.0):
+        raise ValueError(f"barbour_mixed: нужно 0 < a < b, получено a={a}, b={b}")
+    return a, b, h, alpha
+
+
+def _smoothstep5(x):
+    """s(x) = 6x^5 - 15x^4 + 10x^3 на [0,1] и её производная s'(x)."""
+    x = np.clip(x, 0.0, 1.0)
+    s = x**3 * (10.0 - 15.0 * x + 6.0 * x**2)
+    ds = 30.0 * x**2 * (1.0 - x) ** 2
+    return s, ds
+
+
+def barbour_volume(r):
+    """V(r): доступный объём жидкости внутри радиуса r, нм³ (Barbour 2001, ур. 2)."""
+    a, b, h, alpha = _barbour_params()
+    r = np.maximum(np.asarray(r, dtype=float), 0.0)
+    v_c = np.pi * h * r**2
+    v_p = alpha * 4.0 * np.pi / 3.0 * r**3
+    s, _ = _smoothstep5((r - a) / (b - a))
+    return v_c + s * (v_p - v_c)
+
+
+def barbour_area(r):
+    """A(r) = dV/dr, нм² (включая слагаемое s'(x)·(V_pm − V_cleft)/(b − a))."""
+    a, b, h, alpha = _barbour_params()
+    r = np.maximum(np.asarray(r, dtype=float), 0.0)
+    v_c = np.pi * h * r**2
+    v_p = alpha * 4.0 * np.pi / 3.0 * r**3
+    dv_c = 2.0 * np.pi * h * r
+    dv_p = 4.0 * np.pi * alpha * r**2
+    s, ds = _smoothstep5((r - a) / (b - a))
+    return dv_c + s * (dv_p - dv_c) + ds * (v_p - v_c) / (b - a)
 
 
 def radial_cell_measures(r_values, dr, mode=None):
@@ -63,6 +120,8 @@ def radial_cell_measures(r_values, dr, mode=None):
     r_outer = np.maximum(r_values + 0.5 * dr, 0.0)
     if kind == "spherical":
         return (r_outer**3 - r_inner**3) / 3.0
+    if kind == "barbour_mixed":
+        return barbour_volume(r_outer) - barbour_volume(r_inner)
     if kind == "cleft_disk":
         a_c, h, alpha = _cleft_params()
         r1 = np.minimum(r_inner, a_c); r2 = np.minimum(r_outer, a_c)
@@ -84,6 +143,8 @@ def radial_face_measures(r_faces, mode=None):
     r_faces = np.maximum(np.asarray(r_faces, dtype=float), 0.0)
     if kind == "spherical":
         return r_faces**2
+    if kind == "barbour_mixed":
+        return barbour_area(r_faces)
     if kind == "cleft_disk":
         a_c, h, alpha = _cleft_params()
         return np.where(r_faces <= a_c + 1e-9, 2.0 * np.pi * h * r_faces,
@@ -93,6 +154,8 @@ def radial_face_measures(r_faces, mode=None):
 
 def geometry_report_label(mode=None):
     kind = normalize_geometry_mode(mode)
+    if kind == "barbour_mixed":
+        return "Barbour 2001: V(r) = πhr² в щели, α(4π/3)r³ в нейропиле, гладкий переход s(x) между a и b"
     if kind == "cleft_disk":
         return "щель-диск (dV = π·h·d(r²)) внутри r <= a_c, снаружи сфера с долей объёма α"
     if kind == "spherical":

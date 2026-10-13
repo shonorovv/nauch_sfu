@@ -1,0 +1,101 @@
+{
+  "baseline_physical": {
+    "qc": {
+      "balance_rel_error_max": 3.38249132407024e-13,
+      "min_c_preclip_solver_units": 0.0,
+      "negative_values_after_step": 0,
+      "grid_convergence_rel_diff_dr_dt_halved": 0.00022964068429393356,
+      "R_sensitivity_rel_diff_R_x1.5": 0.0,
+      "solver_failed_steps": 0,
+      "solver_checked_steps": 400,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "pulses": 1,
+      "seconds": 0.7370083332061768
+    },
+    "analysis": {
+      "inversion": {
+        "found": false,
+        "t_first_us": null,
+        "r_left_nm": null,
+        "r_right_nm": null,
+        "delta_c_uM": 0.0,
+        "ratio_c": null,
+        "duration_us": 0.0,
+        "max_positive_gradient_uM_per_nm": 0.0,
+        "peak_shift_nm": 1.0
+      },
+      "cleft_mean_peak_uM": 1982.1225055344187,
+      "cleft_mean_decay_1_over_e_us": 45.5,
+      "fraction_uptaken": 0.0,
+      "fraction_escaped": 0.019465518083306724,
+      "fraction_free_end": 0.9805344819170314
+    }
+  },
+  "with_uptake": {
+    "qc": {
+      "balance_rel_error_max": 2.5863992429246235e-13,
+      "min_c_preclip_solver_units": 0.0,
+      "negative_values_after_step": 0,
+      "grid_convergence_rel_diff_dr_dt_halved": 0.00027414342161907024,
+      "R_sensitivity_rel_diff_R_x1.5": 0.0,
+      "solver_failed_steps": 0,
+      "solver_checked_steps": 400,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "pulses": 1,
+      "seconds": 1.1899909973144531
+    },
+    "analysis": {
+      "inversion": {
+        "found": false,
+        "t_first_us": null,
+        "r_left_nm": null,
+        "r_right_nm": null,
+        "delta_c_uM": 0.0,
+        "ratio_c": null,
+        "duration_us": 0.0,
+        "max_positive_gradient_uM_per_nm": 0.0,
+        "peak_shift_nm": 1.0
+      },
+      "cleft_mean_peak_uM": 1982.1225055344187,
+      "cleft_mean_decay_1_over_e_us": 45.5,
+      "fraction_uptaken": 0.5710050799337277,
+      "fraction_escaped": 0.009418637544254923,
+      "fraction_free_end": 0.41957628252227597
+    }
+  },
+  "legacy_coursework": {
+    "qc": {
+      "balance_rel_error_max": 9.958966984414016e-14,
+      "min_c_preclip_solver_units": 0.0,
+      "negative_values_after_step": 0,
+      "grid_convergence_rel_diff_dr_dt_halved": 0.000605566002907032,
+      "R_sensitivity_rel_diff_R_x1.5": 0.0,
+      "solver_failed_steps": 0,
+      "solver_checked_steps": 80,
+      "uptake_scheme": "imex",
+      "clip_negative": true,
+      "pulses": 1,
+      "seconds": 0.12756109237670898
+    },
+    "analysis": {
+      "inversion": {
+        "found": true,
+        "t_first_us": 1.0,
+        "r_left_nm": 0.25,
+        "r_right_nm": 158.25,
+        "delta_c_uM": 14.631618965149848,
+        "ratio_c": 1.4233746397502116,
+        "duration_us": 1000.0,
+        "max_positive_gradient_uM_per_nm": 0.289078563603411,
+        "peak_shift_nm": 162.75
+      },
+      "cleft_mean_peak_uM": 60.68859348768536,
+      "cleft_mean_decay_1_over_e_us": null,
+      "fraction_uptaken": 0.0,
+      "fraction_escaped": 4.538882287699002e-27,
+      "fraction_free_end": 1.0000000000000997
+    }
+  }
+}

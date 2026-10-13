@@ -39,6 +39,13 @@ test_w.py
 !unified_outputs/*.png
 !unified_outputs/*.json
 
+# Этапы 0-2 ТЗ 13.10.2026: небольшие машинно-читаемые результаты
+!experiments_outputs/
+!experiments_outputs/**/
+!experiments_outputs/**/*.json
+!experiments_outputs/**/*.png
+!experiments_outputs/**/*.xlsx
+
 # Статьи (авторские права) и установщики в репозиторий не кладём
 refs/
 *.exe
