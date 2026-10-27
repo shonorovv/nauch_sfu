@@ -1,0 +1,11 @@
+{
+  "git_sha": "d69c163f1b0c416dcd99ae27829fe70745cad93b",
+  "python": "3.13.5",
+  "numpy": "2.4.4",
+  "scipy": "1.17.1",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "device": "CPU",
+  "all_checks_pass": true,
+  "command": "python -m experiments.run_stage3",
+  "time": "2026-10-27 22:17:29"
+}

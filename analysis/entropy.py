@@ -8,8 +8,32 @@ import config
 from solver.geometry import radial_cell_measures
 
 
+def conditional_probability(p_history, r_values, dr):
+    """
+    Распределение оставшихся свободных молекул: p / ∫p dV в каждый момент (P1.4 ТЗ от 13.10.2026).
+
+    В режиме normalization_mode = "concentration" p_history - размерная концентрация
+    (молекул на единицу меры), а p·ΔV - число молекул, поэтому -p·ln p и -q·ln q для
+    них не энтропия Шеннона. Условное распределение P(r | молекула ещё свободна)
+    нормировано на 1 и допускает информационные меры. Это не число молекул и не
+    термодинамическая энтропия: потерю массы (захват, выход) оно скрывает.
+    """
+    p = np.asarray(p_history, float)
+    measures = radial_cell_measures(r_values, dr)[:, None]
+    mass = np.sum(p * measures, axis=0, keepdims=True)
+    return p / np.where(mass > 0.0, mass, 1.0)
+
+
+def _info_ready(p_history, r_values, dr):
+    """Для режима "concentration" переходит к условному распределению, иначе возвращает p как есть."""
+    if str(getattr(config, "normalization_mode", "probability")).lower() == "concentration":
+        return conditional_probability(p_history, r_values, dr)
+    return np.asarray(p_history, float)
+
+
 def compute_entropy_metrics(p_history, r_values, dr):
-    """Локальная и шенноновская энтропия распределения p(r,t)."""
+    """Локальная и шенноновская энтропия распределения p(r,t) (в режиме "concentration" - условного)."""
+    p_history = _info_ready(p_history, r_values, dr)
     eps = 1e-30
     p_safe = np.maximum(p_history, eps)
     local_entropy = -p_safe * np.log(p_safe)
@@ -79,7 +103,13 @@ def compute_shell_probabilities(p_history, r_values, dr):
 
 
 def compute_local_entropy_fields(p_history, r_values, dr):
-    """Возвращает словарь с локальными полями энтропии."""
+    """
+    Возвращает словарь с локальными полями энтропии.
+    shell_molecules - сырое p·ΔV (в режиме "concentration" число молекул; для экспозиции),
+    shell_probabilities - для информационных мер (в "concentration" - условное, см. conditional_probability).
+    """
+    shell_raw = compute_shell_probabilities(p_history, r_values, dr)
+    p_history = _info_ready(p_history, r_values, dr)
     p_safe = np.maximum(np.asarray(p_history, dtype=float), config.EPS)
     shell_probs = np.maximum(compute_shell_probabilities(p_history, r_values, dr), config.EPS)
     local_entropy_density = -p_safe * np.log(p_safe)
@@ -91,6 +121,8 @@ def compute_local_entropy_fields(p_history, r_values, dr):
         "local_entropy_density": local_entropy_density,
         "local_shell_entropy": local_shell_entropy,
         "shell_probabilities": shell_probs,
+        "shell_molecules": shell_raw,
+        "conditional_normalization": str(getattr(config, "normalization_mode", "probability")).lower() == "concentration",
         "shannon_continuous": shannon_continuous,
         "shannon_shell": shannon_shell,
     }

@@ -11,7 +11,7 @@
       "uptake_scheme": "split_implicit",
       "clip_negative": false,
       "pulses": 1,
-      "seconds": 0.7370083332061768
+      "seconds": 0.5838313102722168
     },
     "analysis": {
       "inversion": {
@@ -25,7 +25,7 @@
         "max_positive_gradient_uM_per_nm": 0.0,
         "peak_shift_nm": 1.0
       },
-      "cleft_mean_peak_uM": 1982.1225055344187,
+      "cleft_mean_peak_uM": 1982.1225055344191,
       "cleft_mean_decay_1_over_e_us": 45.5,
       "fraction_uptaken": 0.0,
       "fraction_escaped": 0.019465518083306724,
@@ -44,7 +44,7 @@
       "uptake_scheme": "split_implicit",
       "clip_negative": false,
       "pulses": 1,
-      "seconds": 1.1899909973144531
+      "seconds": 0.9231548309326172
     },
     "analysis": {
       "inversion": {
@@ -58,7 +58,7 @@
         "max_positive_gradient_uM_per_nm": 0.0,
         "peak_shift_nm": 1.0
       },
-      "cleft_mean_peak_uM": 1982.1225055344187,
+      "cleft_mean_peak_uM": 1982.1225055344191,
       "cleft_mean_decay_1_over_e_us": 45.5,
       "fraction_uptaken": 0.5710050799337277,
       "fraction_escaped": 0.009418637544254923,
@@ -77,7 +77,7 @@
       "uptake_scheme": "imex",
       "clip_negative": true,
       "pulses": 1,
-      "seconds": 0.12756109237670898
+      "seconds": 0.10979533195495605
     },
     "analysis": {
       "inversion": {

@@ -46,6 +46,12 @@ test_w.py
 !experiments_outputs/**/*.png
 !experiments_outputs/**/*.xlsx
 
+# Этап 4 ТЗ 13.10.2026: таблицы источников и подгонка против внешней проверки
+!validation_data/
+!validation_data/*.xlsx
+
 # Статьи (авторские права) и установщики в репозиторий не кладём
 refs/
 *.exe
+graphify-out/
+.claude/

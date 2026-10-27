@@ -381,7 +381,7 @@ def run_scenario_analysis(case_name, case_label, omega_pm_value, sim_t_max):
         boundary_guard_nm=config.inversion_boundary_guard_nm,
     )
     excitotoxic_exposure = compute_extrasynaptic_exposure(
-        r_values, t_values, entropy_bundle["shell_probabilities"],
+        r_values, t_values, entropy_bundle["shell_molecules"],
         config.excitotoxicity_extrasynaptic_radius,
         concentration_threshold=config.excitotoxicity_concentration_threshold,
     )

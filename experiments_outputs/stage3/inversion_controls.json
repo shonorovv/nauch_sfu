@@ -1,0 +1,772 @@
+{
+  "1": {
+    "label": "однородная диффузия, без захвата и дрейфа",
+    "expected": "нет",
+    "params": {
+      "name": "c1",
+      "label": "Barbour-геометрия, без захвата и дрейфа",
+      "geometry": "barbour_mixed",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 320.0,
+      "D_pm": 320.0,
+      "Omega_cleft": 0.0,
+      "Omega_pm": 0.0,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "N": 3000.0,
+      "sigma_nm": 20.0,
+      "window_nm": 100.0,
+      "R_nm": 3000.0,
+      "dr_nm": 2.0,
+      "dt_us": 0.5,
+      "t_max_us": 2000.0,
+      "boundary": "dirichlet",
+      "note": "N = 3000: Zheng 2008, Lotter 2021"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  },
+  "2a": {
+    "label": "D_cleft = 10 < D_pm, геометрия Barbour",
+    "expected": "нет",
+    "params": {
+      "name": "c2a",
+      "label": "Barbour-геометрия, без захвата и дрейфа",
+      "geometry": "barbour_mixed",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 10.0,
+      "D_pm": 320.0,
+      "Omega_cleft": 0.0,
+      "Omega_pm": 0.0,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "N": 3000.0,
+      "sigma_nm": 20.0,
+      "window_nm": 100.0,
+      "R_nm": 3000.0,
+      "dr_nm": 2.0,
+      "dt_us": 0.5,
+      "t_max_us": 2000.0,
+      "boundary": "dirichlet",
+      "note": "N = 3000: Zheng 2008, Lotter 2021"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  },
+  "2b": {
+    "label": "D_cleft = 760 > D_pm, геометрия Barbour",
+    "expected": "нет",
+    "params": {
+      "name": "c2b",
+      "label": "Barbour-геометрия, без захвата и дрейфа",
+      "geometry": "barbour_mixed",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 760.0,
+      "D_pm": 320.0,
+      "Omega_cleft": 0.0,
+      "Omega_pm": 0.0,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "N": 3000.0,
+      "sigma_nm": 20.0,
+      "window_nm": 100.0,
+      "R_nm": 3000.0,
+      "dr_nm": 2.0,
+      "dt_us": 0.5,
+      "t_max_us": 2000.0,
+      "boundary": "dirichlet",
+      "note": "N = 3000: Zheng 2008, Lotter 2021"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  },
+  "3": {
+    "label": "насыщаемый захват, не убывающий по r, без дрейфа",
+    "expected": "нет",
+    "params": {
+      "name": "c3",
+      "label": "Barbour-геометрия, насыщаемый захват, без дрейфа",
+      "geometry": "barbour_mixed",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 10.0,
+      "D_pm": 320.0,
+      "Omega_cleft": 0.0,
+      "Omega_pm": 0.0,
+      "uptake": "saturable",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.01,
+      "Km": 20.0,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "N": 3000.0,
+      "sigma_nm": 20.0,
+      "window_nm": 100.0,
+      "R_nm": 3000.0,
+      "dr_nm": 2.0,
+      "dt_us": 0.5,
+      "t_max_us": 2000.0,
+      "boundary": "dirichlet",
+      "note": "Vmax_pm и Km - рабочие оценки (см. docs/stage02_report.md), не константы EAAT"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  },
+  "4": {
+    "label": "курсовая: дрейф наружу Ω = 0,05/0,15 (сфера)",
+    "expected": "возможна",
+    "params": {
+      "name": "legacy_coursework",
+      "label": "исторический сценарий курсовой (config.py)",
+      "geometry": "spherical",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 10.0,
+      "D_pm": 0.5,
+      "Omega_cleft": 0.05,
+      "Omega_pm": 0.15,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "imex",
+      "clip_negative": true,
+      "N": 3000.0,
+      "sigma_nm": 500.0,
+      "window_nm": 500.0,
+      "R_nm": 1000.0,
+      "dr_nm": 0.5,
+      "dt_us": 0.5,
+      "t_max_us": 1000.0,
+      "boundary": "dirichlet",
+      "note": "num_pulses = 100 в config.py, фактически 1 (предел 100 Гц в окне 0-500 мкс); N = 3000 добавлено, чтобы перевести вероятность в концентрацию"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": true,
+          "t_first_us": 1.0,
+          "r_left_nm": 0.25,
+          "r_right_nm": 158.25,
+          "delta_c_uM": 14.631618965149848,
+          "ratio_c": 1.4233746397502116,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.289078563603411,
+          "peak_shift_nm": 162.75
+        },
+        "fine": {
+          "found": true,
+          "t_first_us": 0.75,
+          "r_left_nm": 0.125,
+          "r_right_nm": 158.125,
+          "delta_c_uM": 14.66404671358859,
+          "ratio_c": 1.4242941318663134,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.2970831442073347,
+          "peak_shift_nm": 162.625
+        },
+        "R x1.5": {
+          "found": true,
+          "t_first_us": 1.0,
+          "r_left_nm": 0.25,
+          "r_right_nm": 158.25,
+          "delta_c_uM": 14.631618965149848,
+          "ratio_c": 1.4233746397502116,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.289078563603411,
+          "peak_shift_nm": 162.75
+        },
+        "stable": true,
+        "max_delta_dev": 0.0022162789036524228,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": true,
+          "t_first_us": 1.0,
+          "r_left_nm": 0.25,
+          "r_right_nm": 158.25,
+          "delta_c_uM": 14.631618965149848,
+          "ratio_c": 1.4233746397502116,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.289078563603411,
+          "peak_shift_nm": 162.75
+        },
+        "fine": {
+          "found": true,
+          "t_first_us": 0.75,
+          "r_left_nm": 0.125,
+          "r_right_nm": 158.125,
+          "delta_c_uM": 14.66404671358859,
+          "ratio_c": 1.4242941318663134,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.2970831442073347,
+          "peak_shift_nm": 162.625
+        },
+        "R x1.5": {
+          "found": true,
+          "t_first_us": 1.0,
+          "r_left_nm": 0.25,
+          "r_right_nm": 158.25,
+          "delta_c_uM": 14.631618965149848,
+          "ratio_c": 1.4233746397502116,
+          "duration_us": 1000.0,
+          "max_positive_gradient_uM_per_nm": 0.289078563603411,
+          "peak_shift_nm": 162.75
+        },
+        "stable": true,
+        "max_delta_dev": 0.0022162789036524228,
+        "matches_expectation": true
+      }
+    }
+  },
+  "4b": {
+    "label": "то же без дрейфа",
+    "expected": "нет",
+    "params": {
+      "name": "c4b",
+      "label": "исторический сценарий курсовой (config.py)",
+      "geometry": "spherical",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 10.0,
+      "D_pm": 0.5,
+      "Omega_cleft": 0.0,
+      "Omega_pm": 0.0,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "imex",
+      "clip_negative": true,
+      "N": 3000.0,
+      "sigma_nm": 500.0,
+      "window_nm": 500.0,
+      "R_nm": 1000.0,
+      "dr_nm": 0.5,
+      "dt_us": 0.5,
+      "t_max_us": 1000.0,
+      "boundary": "dirichlet",
+      "note": "num_pulses = 100 в config.py, фактически 1 (предел 100 Гц в окне 0-500 мкс); N = 3000 добавлено, чтобы перевести вероятность в концентрацию"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.25
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.125
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.25
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.25
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.125
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.25
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  },
+  "5": {
+    "label": "дрейф внутрь из единой подгонки (Ω = -0,084/-0,25)",
+    "expected": "нет",
+    "params": {
+      "name": "c5",
+      "label": "Barbour-геометрия, без захвата и дрейфа",
+      "geometry": "barbour_mixed",
+      "a_nm": 200.0,
+      "b_nm": 400.0,
+      "h_nm": 20.0,
+      "alpha": 0.2,
+      "D_cleft": 16.7,
+      "D_pm": 320.0,
+      "Omega_cleft": -0.084,
+      "Omega_pm": -0.25,
+      "uptake": "none",
+      "Vmax_cleft": 0.0,
+      "Vmax_pm": 0.0,
+      "Km": 20.0,
+      "uptake_scheme": "split_implicit",
+      "clip_negative": false,
+      "N": 3000.0,
+      "sigma_nm": 20.0,
+      "window_nm": 100.0,
+      "R_nm": 3000.0,
+      "dr_nm": 2.0,
+      "dt_us": 0.5,
+      "t_max_us": 2000.0,
+      "boundary": "dirichlet",
+      "note": "N = 3000: Zheng 2008, Lotter 2021"
+    },
+    "runs": {
+      "1e-06": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      },
+      "0.001": {
+        "base": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "fine": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 0.5
+        },
+        "R x1.5": {
+          "found": false,
+          "t_first_us": null,
+          "r_left_nm": null,
+          "r_right_nm": null,
+          "delta_c_uM": 0.0,
+          "ratio_c": null,
+          "duration_us": 0.0,
+          "max_positive_gradient_uM_per_nm": 0.0,
+          "peak_shift_nm": 1.0
+        },
+        "stable": true,
+        "max_delta_dev": 0.0,
+        "matches_expectation": true
+      }
+    }
+  }
+}

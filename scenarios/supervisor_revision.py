@@ -244,6 +244,16 @@ def run_model_scenario(
             config.Omega_transition_kind,
             config.Omega_transition_steepness,
             outer_boundary_mode=config.outer_boundary_mode,
+            # legacy: все члены уравнения заданы явно и заморожены (P1.3 ТЗ от 13.10.2026);
+            # значения равны прежним умолчаниям решателя, результаты не меняются
+            normalization_mode="probability",
+            uptake_kind="linear",
+            k_cleft=0.0,
+            k_pm=0.0,
+            Vmax_cleft=0.0,
+            Vmax_pm=0.0,
+            uptake_scheme="imex",
+            clip_negative=True,
         )
 
     diag = inversion_diagnostics(r, t, p_hist)
